@@ -1,7 +1,8 @@
-package repositories;
+package com.proyectospring.gestionbodega.repositories;
 
-import entities.Bodega;
 import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.proyectospring.gestionbodega.entities.Bodega;
 
 public interface BodegaRepository extends JpaRepository<Bodega, Long> {
 

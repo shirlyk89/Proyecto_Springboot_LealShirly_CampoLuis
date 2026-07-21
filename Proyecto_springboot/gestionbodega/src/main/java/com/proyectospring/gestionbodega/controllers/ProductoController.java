@@ -1,4 +1,4 @@
-package controllers;
+package com.proyectospring.gestionbodega.controllers;
 
 import java.util.List;
 
@@ -14,8 +14,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import entities.Producto;
-import services.ProductoService;
+import com.proyectospring.gestionbodega.entities.Producto;
+import com.proyectospring.gestionbodega.services.ProductoService;
 
 @RestController
 @RequestMapping("/api/productos")

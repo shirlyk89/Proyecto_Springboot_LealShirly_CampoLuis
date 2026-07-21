@@ -1,26 +1,23 @@
-package entities;
-
-import java.math.BigDecimal;
+package com.proyectospring.gestionbodega.entities;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
+@Table(name = "bodega",  schema = "logitrack")
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class Producto {
-
+public class Bodega {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -28,17 +25,14 @@ public class Producto {
     @Column(nullable = false, length = 100)
     private String nombre;
 
-    @Column(length = 255)
-    private String descripcion;
-
-    @Column(nullable = false, precision = 10, scale = 2)
-    private BigDecimal precio; 
+    @Column(nullable = false, length = 225)
+    private String ubicacion;
 
     @Column(nullable = false)
-    private Integer stock;
+    private Integer capacidad;
 
-    @ManyToOne
-    @JoinColumn(name = "bodega_id", nullable = false)
-    private Bodega bodega;
+    @Column(nullable = false, length = 225)
+    private String encargado;
+
 
 }

@@ -1,4 +1,5 @@
-package controllers;
+package com.proyectospring.gestionbodega.controllers;
+
 
 import java.util.List;
 
@@ -11,9 +12,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import entities.Movimiento;
-import services.MovimientoService;
-
+import com.proyectospring.gestionbodega.entities.Movimiento;
+import com.proyectospring.gestionbodega.services.MovimientoService;;
 @RestController
 @RequestMapping("/api/movimientos")
 @CrossOrigin(origins = "*") 

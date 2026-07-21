@@ -1,4 +1,4 @@
-package controllers;
+package com.proyectospring.gestionbodega.controllers;
 
 import java.util.List;
 import java.util.Optional;
@@ -12,9 +12,8 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-
-import entities.Bodega;
-import services.BodegaService;
+import com.proyectospring.gestionbodega.entities.Bodega;
+import com.proyectospring.gestionbodega.services.BodegaService;
 
 @Controller
 @RequestMapping("/api/bodegas")

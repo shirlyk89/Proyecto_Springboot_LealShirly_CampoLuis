@@ -1,4 +1,4 @@
-package entities;
+package com.proyectospring.gestionbodega.entities;
 
 import java.time.LocalDateTime;
 
@@ -21,7 +21,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "movimientos")
+@Table(name = "movimientos", schema = "logitrack")
 @Getter
 @Setter
 @NoArgsConstructor

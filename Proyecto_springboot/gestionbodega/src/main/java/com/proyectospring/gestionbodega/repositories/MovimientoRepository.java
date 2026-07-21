@@ -1,8 +1,9 @@
-package repositories;
+package com.proyectospring.gestionbodega.repositories;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-import entities.Movimiento;
+
+import com.proyectospring.gestionbodega.entities.Movimiento;
 
 import java.time.LocalDateTime;
 import java.util.List;

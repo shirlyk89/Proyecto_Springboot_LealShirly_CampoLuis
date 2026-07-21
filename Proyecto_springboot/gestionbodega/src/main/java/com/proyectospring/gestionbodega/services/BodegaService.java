@@ -1,12 +1,12 @@
-package services;
+package com.proyectospring.gestionbodega.services;
 
 import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
-import entities.Bodega;
-import repositories.BodegaRepository;
+import com.proyectospring.gestionbodega.entities.Bodega;
+import com.proyectospring.gestionbodega.repositories.BodegaRepository;
 
 @Service
 public class BodegaService {

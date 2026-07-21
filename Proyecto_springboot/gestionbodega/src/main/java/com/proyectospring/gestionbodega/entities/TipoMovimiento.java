@@ -1,4 +1,4 @@
-package entities;
+package com.proyectospring.gestionbodega.entities;
 
 public enum TipoMovimiento {
     ENTRADA,

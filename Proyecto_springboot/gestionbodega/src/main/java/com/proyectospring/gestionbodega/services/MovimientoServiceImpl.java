@@ -1,12 +1,17 @@
-package services;
+package com.proyectospring.gestionbodega.services;
 
 import java.util.List;
 
-import entities.Movimiento;
-import entities.Producto;
+import org.springframework.stereotype.Service;
+
+import com.proyectospring.gestionbodega.entities.Movimiento;
+import com.proyectospring.gestionbodega.entities.Producto;
+import com.proyectospring.gestionbodega.repositories.MovimientoRepository;
+import com.proyectospring.gestionbodega.repositories.ProductoRepository;
+
 import jakarta.transaction.Transactional;
-import repositories.MovimientoRepository;
-import repositories.ProductoRepository;
+
+@Service
 
 public class MovimientoServiceImpl implements MovimientoService {
 
@@ -19,6 +24,7 @@ public class MovimientoServiceImpl implements MovimientoService {
         this.productoRepository = productoRepository;
     }
 
+  
     @Override
     @Transactional
     public Movimiento registrarMovimiento(Movimiento movimiento) {

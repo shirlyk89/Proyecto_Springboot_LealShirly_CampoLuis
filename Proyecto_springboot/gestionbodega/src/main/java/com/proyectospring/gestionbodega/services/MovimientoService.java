@@ -1,7 +1,8 @@
-package services;
+package com.proyectospring.gestionbodega.services;
 
 import java.util.List;
-import entities.Movimiento;
+
+import com.proyectospring.gestionbodega.entities.Movimiento;
 
 
 public interface MovimientoService {

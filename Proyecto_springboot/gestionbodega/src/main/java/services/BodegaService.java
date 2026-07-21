@@ -48,9 +48,6 @@ public class BodegaService {
         bodegaRepository.deleteById(id);
     }
 
-    public List<Bodega> listar() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'listar'");
-    }
+  
 
 }

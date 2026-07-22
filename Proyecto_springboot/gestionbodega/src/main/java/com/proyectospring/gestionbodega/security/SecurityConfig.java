@@ -10,10 +10,17 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -21,19 +28,30 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .anyRequest().permitAll() // Permitimos todo por el momento para probar la app
+                // 1. Las rutas de login y registro son públicas (no piden token)
+                .requestMatchers("/auth/**").permitAll() 
+                
+                // 2. Solo lectura (GET) para Empleados y Administradores
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/bodegas/**", "/productos/**").hasAnyRole("ADMIN", "EMPLEADO")
+                
+                // 3. Creación, edición y eliminación exclusiva para Administradores
+                .requestMatchers("/bodegas/**", "/productos/**", "/movimientos/**").hasRole("ADMIN")
+                
+                // 4. Cualquier otra ruta que exista o se cree a futuro pedirá token obligatorio
+                .anyRequest().authenticated()
             );
+
+        // Añadir el filtro JWT que creaste
+        http.addFilterBefore(jwtAuthenticationFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
         
         return http.build();
     }
 
-    // Necesario para cifrar/descifrar contraseñas con BCrypt
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    // Necesario para procesar la autenticación en el endpoint de Login
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
         return authenticationConfiguration.getAuthenticationManager();

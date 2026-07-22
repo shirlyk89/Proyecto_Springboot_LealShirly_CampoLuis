@@ -1,5 +1,7 @@
 package com.proyectospring.gestionbodega.entities;
 
+import com.proyectospring.gestionbodega.security.listeners.AuditoriaListener;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;

@@ -55,6 +55,10 @@ public class Movimiento {
     @JoinColumn(name = "bodega_destino_id")
     private Bodega bodegaDestino;
 
+    @ManyToOne
+    @JoinColumn(name = "usuario_id")
+    private Usuario usuario;
+
     @PrePersist
     public void prePersist() {
         this.fechaHora = LocalDateTime.now();

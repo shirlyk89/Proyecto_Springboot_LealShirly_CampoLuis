@@ -7,9 +7,11 @@ import org.springframework.stereotype.Service;
 import com.proyectospring.gestionbodega.entities.Bodega;
 import com.proyectospring.gestionbodega.entities.Movimiento;
 import com.proyectospring.gestionbodega.entities.Producto;
+import com.proyectospring.gestionbodega.entities.Usuario;
 import com.proyectospring.gestionbodega.repositories.BodegaRepository;
 import com.proyectospring.gestionbodega.repositories.MovimientoRepository;
 import com.proyectospring.gestionbodega.repositories.ProductoRepository;
+import com.proyectospring.gestionbodega.repositories.UsuarioRepository;
 
 import jakarta.transaction.Transactional;
 
@@ -21,15 +23,17 @@ public class MovimientoServiceImpl implements MovimientoService {
     private final MovimientoRepository movimientoRepository;
     private final ProductoRepository productoRepository;
     private final BodegaRepository bodegaRepository;
+    private final UsuarioRepository usuarioRepository;
 
    
 
     public MovimientoServiceImpl(MovimientoRepository movimientoRepository, ProductoRepository productoRepository,
-          BodegaRepository bodegaRepository
+          BodegaRepository bodegaRepository, UsuarioRepository usuarioRepository
     ) {
         this.movimientoRepository = movimientoRepository;
         this.productoRepository = productoRepository;
         this.bodegaRepository = bodegaRepository;
+        this.usuarioRepository = usuarioRepository;
     }
 
 
@@ -37,6 +41,12 @@ public class MovimientoServiceImpl implements MovimientoService {
     @Override
     @Transactional
     public Movimiento registrarMovimiento(Movimiento movimiento) {
+
+        if (movimiento.getUsuario() != null && movimiento.getUsuario().getId() != null) {
+            Usuario usuario = usuarioRepository.findById(movimiento.getUsuario().getId())
+                    .orElseThrow(() -> new RuntimeException("El usuario no existe"));
+            movimiento.setUsuario(usuario);
+        }
 
 
         if (movimiento.getBodegaDestino() != null && movimiento.getBodegaDestino().getId() != null) {

@@ -25,18 +25,24 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/auth/**").permitAll()
+            .csrf(csrf -> csrf.disable())
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth
+                // 1. Las rutas de login y registro son públicas (no piden token)
+                .requestMatchers("/api/auth/**", "/error").permitAll() 
                 
-                // Solo el Administrador puede ver las auditorías
-                .requestMatchers("/auditoria/**").hasRole("ADMIN")
+                // 2. Solo lectura (GET) para Empleados y Administradores
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/bodegas/**", "/api/productos/**").hasAnyRole("ADMIN", "EMPLEADO")
                 
-                .requestMatchers(org.springframework.http.HttpMethod.GET, "/bodegas/**", "/productos/**").hasAnyRole("ADMIN", "EMPLEADO")
-                .requestMatchers("/bodegas/**", "/productos/**", "/movimientos/**").hasRole("ADMIN")
+                // 3. Creación, edición y eliminación exclusiva para Administradores
+                .requestMatchers("/api/bodegas/**", "/api/productos/**", "/api/movimientos/**").hasRole("ADMIN")
+                
+                // 4. Cualquier otra ruta que exista o se cree a futuro pedirá token obligatorio
                 .anyRequest().authenticated()
             );
+
         // Añadir el filtro JWT que creaste
-        http.addFilterBefore(jwtAuthenticationFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         
         return http.build();
     }

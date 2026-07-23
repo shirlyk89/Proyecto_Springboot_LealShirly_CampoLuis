@@ -35,7 +35,7 @@ public class SecurityConfig {
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/bodegas/**", "/api/productos/**").hasAnyRole("ADMIN", "EMPLEADO")
                 
                 // 3. Creación, edición y eliminación exclusiva para Administradores
-                .requestMatchers("/api/bodegas/**", "/api/productos/**", "/api/movimientos/**").hasRole("ADMIN")
+                .requestMatchers("/api/bodegas/**", "/api/productos/**").hasRole("ADMIN")
                 
                 // 4. Cualquier otra ruta que exista o se cree a futuro pedirá token obligatorio
                 .anyRequest().authenticated()

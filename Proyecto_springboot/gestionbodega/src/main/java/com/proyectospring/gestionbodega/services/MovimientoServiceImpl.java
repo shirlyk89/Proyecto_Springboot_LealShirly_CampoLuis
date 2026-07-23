@@ -12,6 +12,7 @@ import com.proyectospring.gestionbodega.repositories.BodegaRepository;
 import com.proyectospring.gestionbodega.repositories.MovimientoRepository;
 import com.proyectospring.gestionbodega.repositories.ProductoRepository;
 import com.proyectospring.gestionbodega.repositories.UsuarioRepository;
+import com.proyectospring.gestionbodega.security.dtos.MovimientoDto;
 
 import jakarta.transaction.Transactional;
 
@@ -40,55 +41,62 @@ public class MovimientoServiceImpl implements MovimientoService {
   
     @Override
     @Transactional
-    public Movimiento registrarMovimiento(Movimiento movimiento) {
+    public Movimiento registrarMovimiento(MovimientoDto dto) {
 
-        if (movimiento.getUsuario() != null && movimiento.getUsuario().getId() != null) {
-            Usuario usuario = usuarioRepository.findById(movimiento.getUsuario().getId())
+        if (dto.getUsuario() != null && dto.getUsuario().getId() != null) {
+            Usuario usuario = usuarioRepository.findById(dto.getUsuario().getId())
                     .orElseThrow(() -> new RuntimeException("El usuario no existe"));
-            movimiento.setUsuario(usuario);
+            dto.setUsuario(usuario);
         }
 
 
-        if (movimiento.getBodegaDestino() != null && movimiento.getBodegaDestino().getId() != null) {
-            Bodega bodegaDestino = bodegaRepository.findById(movimiento.getBodegaDestino().getId())
+        if (dto.getBodegaDestino() != null && dto.getBodegaDestino().getId() != null) {
+            Bodega bodegaDestino = bodegaRepository.findById(dto.getBodegaDestino().getId())
                     .orElseThrow(() -> new RuntimeException("La bodega destino no existe"));
-            movimiento.setBodegaDestino(bodegaDestino);
+            dto.setBodegaDestino(bodegaDestino);
         }
 
         // 3. ➕ NUEVO: Cargar los datos de la bodega origen si viene en el JSON
-        if (movimiento.getBodegaOrigen() != null && movimiento.getBodegaOrigen().getId() != null) {
-            Bodega bodegaOrigen = bodegaRepository.findById(movimiento.getBodegaOrigen().getId())
+        if (dto.getBodegaOrigen() != null && dto.getBodegaOrigen().getId() != null) {
+            Bodega bodegaOrigen = bodegaRepository.findById(dto.getBodegaOrigen().getId())
                     .orElseThrow(() -> new RuntimeException("La bodega origen no existe"));
-            movimiento.setBodegaOrigen(bodegaOrigen);
+            dto.setBodegaOrigen(bodegaOrigen);
         }
         
-        Producto producto = productoRepository.findById(movimiento.getProducto().getId())
+        Producto producto = productoRepository.findById(dto.getProducto().getId())
                 .orElseThrow(() -> new RuntimeException("El producto no existe"));
 
-        switch (movimiento.getTipo()) {
+        switch (dto.getTipo()) {
 
             case ENTRADA:
-                int nuevoStockEntrada = producto.getStock() + movimiento.getCantidad();
+                int nuevoStockEntrada = producto.getStock() + dto.getCantidad();
                 producto.setStock(nuevoStockEntrada);
                 break;
 
             case SALIDA:
-                if (producto.getStock() < movimiento.getCantidad()) {
+                if (producto.getStock() < dto.getCantidad()) {
                     throw new RuntimeException("Stock insuficiente para realizar la salida");
                 }
-                int nuevoStockSalida = producto.getStock() - movimiento.getCantidad();
+                int nuevoStockSalida = producto.getStock() - dto.getCantidad();
                 producto.setStock(nuevoStockSalida);
                 break;
 
             case TRANSFERENCIA:
-                if (producto.getStock() < movimiento.getCantidad()) {
+                if (producto.getStock() < dto.getCantidad()) {
                     throw new RuntimeException("Stock insuficiente para realizar la transferencia");
                 }
                 break;
         }
 
         productoRepository.save(producto);
+
+        Movimiento movimiento = new Movimiento();
+        movimiento.setUsuario(dto.getUsuario());
+        movimiento.setBodegaDestino(dto.getBodegaDestino());
+        movimiento.setBodegaOrigen(dto.getBodegaOrigen());
         movimiento.setProducto(producto);
+        movimiento.setTipo(dto.getTipo());
+        movimiento.setCantidad(dto.getCantidad());
 
         return movimientoRepository.save(movimiento);
     }

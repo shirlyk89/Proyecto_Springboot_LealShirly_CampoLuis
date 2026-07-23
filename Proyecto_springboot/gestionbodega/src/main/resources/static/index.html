@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Bodega - LogiTrack</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .panel { border: 1px solid #ccc; padding: 20px; margin-bottom: 20px; max-width: 400px; }
+        .hidden { display: none; }
+        input, button { display: block; margin-bottom: 10px; width: 100%; padding: 8px; }
+    </style>
+</head>
+<body>
+
+    <h1>Sistema de Gestión de Bodega</h1>
+
+    <!-- Panel de Login -->
+    <div id="loginPanel" class="panel">
+        <h2>Iniciar Sesión</h2>
+        <form id="loginForm">
+            <input type="text" id="username" placeholder="Nombre de usuario" required>
+            <input type="password" id="password" placeholder="Contraseña" required>
+            <button type="submit">Ingresar</button>
+        </form>
+        <p id="loginMensaje" style="color: red;"></p>
+    </div>
+
+    <!-- Panel de Administración -->
+    <div id="adminPanel" class="panel hidden">
+        <h2>Panel de Administración</h2>
+        <p>Bienvenido, <span id="userLogueado"></span>.</p>
+        <button id="btnDescargarReporte">📥 Descargar Reporte de Auditoría (.txt)</button>
+        <button id="btnCerrarSesion" style="background-color: #ff4d4d; color: white;">Cerrar Sesión</button>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

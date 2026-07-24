@@ -1,200 +1,235 @@
+/* Variables y Configuración Global */
 :root {
-    --bg-dark: #0a1118;
-    --bg-card: #121e2a;
-    --primary-cyan: #00d2ff;
-    --primary-blue: #3a7bd5;
-    --text-light: #ffffff;
-    --text-muted: #a0aec0;
-    --gradient-accent: linear-gradient(135deg, var(--primary-cyan) 0%, var(--primary-blue) 100%);
+    --bg-color: #0b0f19;
+    --card-bg: #111827;
+    --card-border: #1f2937;
+    --text-main: #f9fafb;
+    --text-muted: #9ca3af;
+    --accent-cyan: #06b6d4;
+    --accent-teal: #14b8a6;
+    --gradient-brand: linear-gradient(135deg, #06b6d4 0%, #10b981 100%);
+    --font-family: 'Poppins', sans-serif;
 }
 
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Poppins', sans-serif;
 }
 
 body {
-    background-color: var(--bg-dark);
-    color: var(--text-light);
+    font-family: var(--font-family);
+    background-color: var(--bg-color);
+    color: var(--text-main);
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    overflow-x: hidden;
-}
-
-/* Navbar */
-nav {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 20px 50px;
-    background-color: rgba(10, 17, 24, 0.8);
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.logo {
-    font-size: 1.5rem;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.logo span {
-    color: var(--primary-cyan);
-}
-
-.nav-btn {
-    background: transparent;
-    border: 1px solid var(--primary-cyan);
-    color: var(--primary-cyan);
-    padding: 8px 20px;
-    border-radius: 20px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-weight: 600;
-}
-
-.nav-btn:hover {
-    background: var(--gradient-accent);
-    color: white;
-    border-color: transparent;
-}
-
-/* Main Container */
-main {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 50px 20px;
-    text-align: center;
-}
-
-.hero h1 {
-    font-size: 3.5rem;
-    line-height: 1.1;
-    margin-bottom: 15px;
-}
-
-.hero h1 .highlight {
-    background: var(--gradient-accent);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    font-style: italic;
-}
-
-.hero p {
-    color: var(--text-muted);
-    max-width: 600px;
-    margin: 0 auto 40px auto;
-    font-size: 1.1rem;
-}
-
-/* Cards and Panels */
-.panel {
-    width: 100%;
-    max-width: 450px;
-    background-color: var(--bg-card);
-    border-radius: 16px;
-    padding: 40px;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    transition: opacity 0.5s ease;
 }
 
 .hidden {
     display: none !important;
 }
 
-/* Form Elements */
-.panel h2 {
-    margin-bottom: 25px;
-    font-size: 1.8rem;
+/* Navbar Minimalista */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 5%;
+    border-bottom: 1px solid var(--card-border);
 }
 
-input {
-    width: 100%;
-    padding: 15px;
-    margin-bottom: 15px;
-    background-color: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+.nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 600;
+    font-size: 1.25rem;
+}
+
+.logo-box {
+    width: 35px;
+    height: 35px;
+    background: var(--gradient-brand);
     border-radius: 8px;
-    color: white;
-    font-size: 1rem;
-    outline: none;
-    transition: border-color 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: #000;
 }
 
-input:focus {
-    border-color: var(--primary-cyan);
+.nav-links {
+    display: flex;
+    gap: 1.5rem;
+    list-style: none;
 }
 
-.btn-submit {
+.nav-link {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 0.95rem;
+    transition: color 0.2s;
+}
+
+.nav-link:hover, .nav-link.active {
+    color: var(--accent-cyan);
+}
+
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.btn-outline {
+    background: transparent;
+    border: 1px solid var(--card-border);
+    color: var(--text-main);
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-outline:hover {
+    border-color: var(--accent-cyan);
+    color: var(--accent-cyan);
+}
+
+/* Contenedor Principal / Vistas */
+.main-container {
+    flex: 1;
+    padding: 3rem 5%;
+    max-width: 1200px;
+    margin: 0 auto;
     width: 100%;
-    padding: 15px;
+}
+
+/* Pantalla de Login */
+.login-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 70vh;
+}
+
+.hero-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 2.5rem;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+}
+
+.hero-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    line-height: 1.2;
+}
+
+.hero-title span {
+    background: var(--gradient-brand);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.hero-subtitle {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 2rem;
+}
+
+.form-group {
+    margin-bottom: 1.25rem;
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+}
+
+.form-control {
+    width: 100%;
+    background: var(--bg-color);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    color: var(--text-main);
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.form-control:focus {
+    border-color: var(--accent-cyan);
+}
+
+.btn-primary {
+    width: 100%;
+    background: var(--gradient-brand);
+    color: #000;
+    font-weight: 600;
+    padding: 0.75rem;
     border: none;
     border-radius: 8px;
-    background: var(--gradient-accent);
-    color: white;
-    font-size: 1.1rem;
-    font-weight: 600;
     cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
-    margin-top: 10px;
+    margin-top: 1rem;
+    transition: opacity 0.2s;
 }
 
-.btn-submit:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 20px rgba(0, 210, 255, 0.3);
+.btn-primary:hover {
+    opacity: 0.9;
 }
 
-.error-msg {
-    color: #ff4d4d;
-    margin-top: 15px;
-    font-size: 0.9rem;
+.mensaje-feedback {
+    margin-top: 1rem;
+    font-size: 0.85rem;
+    color: #f87171;
+    text-align: center;
 }
 
-/* Admin Dashboard Card Style */
+/* Secciones del Dashboard */
+.section-header {
+    margin-bottom: 2rem;
+}
+
+.section-header h2 {
+    font-size: 1.8rem;
+    font-weight: 600;
+}
+
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
 .dashboard-card {
-    background: linear-gradient(145deg, #0f2027, #203a43, #2c5364);
-    border-left: 4px solid var(--primary-cyan);
-    text-align: left;
-    padding: 30px;
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: border-color 0.2s;
+}
+
+.dashboard-card:hover {
+    border-color: var(--accent-teal);
 }
 
 .dashboard-card h3 {
-    font-size: 1.5rem;
-    margin-bottom: 10px;
+    font-size: 1.2rem;
+    margin-bottom: 0.75rem;
+    color: var(--accent-cyan);
 }
 
 .dashboard-card p {
+    color: var(--text-muted);
     font-size: 0.9rem;
-    color: rgba(255, 255, 255, 0.8);
-    margin-bottom: 25px;
-}
-
-.btn-download {
-    background: transparent;
-    border: 2px solid white;
-    color: white;
-    padding: 10px 20px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.3s;
-}
-
-.btn-download:hover {
-    background: white;
-    color: #203a43;
-}
-
-#userLogueado {
-    color: var(--primary-cyan);
-    font-weight: bold;
-    text-transform: capitalize;
+    line-height: 1.5;
 }

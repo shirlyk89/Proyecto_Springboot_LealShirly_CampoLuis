@@ -3,54 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LogiTrack - Gestión de Bodega</title>
-    <!-- Importamos la fuente Poppins -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <!-- Vinculamos nuestra hoja de estilos externa -->
-    <meta charset="UTF-8">
-    <title>Gestión de Bodega</title>
-    <!-- Agrega esta línea: -->
-    <link rel="icon" href="data:,">
+    <title>Sistema de Gestión de Bodega</title>
+    <!-- Fuente Poppins -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-    <nav>
-        <div class="logo">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="#00d2ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            Logi<span>Track</span>
+    <!-- Navbar Global -->
+    <header class="navbar">
+        <div class="nav-brand">
+            <div class="logo-box">MB</div>
+            <span>GestionBodega</span>
         </div>
-        <button id="navBtnLogout" class="nav-btn hidden">Cerrar Sesión</button>
-    </nav>
+        
+        <!-- Menú visible solo al iniciar sesión -->
+        <ul id="navMenu" class="nav-links hidden">
+            <li><a href="#" class="nav-link active" data-section="dashboard">Dashboard</a></li>
+            <li><a href="#" class="nav-link" data-section="bodegas">Bodegas</a></li>
+            <li><a href="#" class="nav-link" data-section="productos">Productos</a></li>
+            <li><a href="#" class="nav-link" data-section="movimientos">Movimientos</a></li>
+            <li><a href="#" class="nav-link" data-section="auditoria">Auditoría</a></li>
+        </ul>
 
-    <main>
-        <header class="hero">
-            <h1>Gestión de Bodega<br><span class="highlight">a Medida</span></h1>
-            <p>Sistema integral y seguro para el control de inventario. Descarga tus reportes de auditoría generados en tiempo real.</p>
-        </header>
+        <div class="nav-right">
+            <span id="userLogueado" class="text-muted" style="font-size: 0.9rem;"></span>
+            <button id="navBtnLogout" class="btn-outline hidden">Cerrar Sesión</button>
+        </div>
+    </header>
 
-        <!-- Panel de Login -->
-        <div id="loginPanel" class="panel">
-            <h2>Iniciar Sesión</h2>
-            <form id="loginForm">
-                <input type="text" id="username" placeholder="Nombre de usuario" required>
-                <input type="password" id="password" placeholder="Contraseña" required>
-                <button type="submit" class="btn-submit">Ingresar al Sistema</button>
-            </form>
-            <p id="loginMensaje" class="error-msg"></p>
+    <!-- Contenedor Principal -->
+    <main class="main-container">
+
+        <!-- 1. PANTALLA DE LOGIN -->
+        <section id="loginPanel" class="login-wrapper">
+            <div class="hero-card">
+                <h1 class="hero-title">Control Total <br><span>a Medida</span></h1>
+                <p class="hero-subtitle">Ingresa tus credenciales para acceder al sistema de inventario y auditoría.</p>
+                
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="username">Usuario</label>
+                        <input type="text" id="username" class="form-control" required placeholder="ej. admin">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password">Contraseña</label>
+                        <input type="password" id="password" class="form-control" required placeholder="••••••••">
+                    </div>
+
+                    <button type="submit" class="btn-primary">Ingresar al Sistema</button>
+                    <div id="loginMensaje" class="mensaje-feedback"></div>
+                </form>
+            </div>
+        </section>
+
+        <!-- 2. PANEL DE ADMINISTRACIÓN / DASHBOARD -->
+        <div id="adminPanel" class="hidden">
+            
+            <!-- Subsección: Dashboard / Inicio -->
+            <div id="section-dashboard" class="app-section">
+                <div class="section-header">
+                    <h2>Panel Principal</h2>
+                    <p style="color: var(--text-muted);">Resumen rápido de operaciones y accesos directos.</p>
+                </div>
+                
+                <div class="cards-grid">
+                    <div class="dashboard-card">
+                        <h3>Gestión de Bodegas</h3>
+                        <p>Administra las ubicaciones, capacidades y el personal asignado a cada depósito.</p>
+                    </div>
+                    <div class="dashboard-card">
+                        <h3>Control de Stock</h3>
+                        <p>Supervisa el inventario de productos, categorías y alertas automáticas por bajo stock.</p>
+                    </div>
+                    <div class="dashboard-card">
+                        <h3>Reportes y Auditoría</h3>
+                        <p>Genera y descarga reportes detallados en formato TXT con seguridad y trazabilidad.</p>
+                        <button id="btnDescargarReporte" class="btn-outline" style="margin-top: 1rem; width: 100%;">Descargar Auditoría TXT</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Subsección: Bodegas -->
+            <div id="section-bodegas" class="app-section hidden">
+                <div class="section-header">
+                    <h2>Módulo de Bodegas</h2>
+                </div>
+                <p style="color: var(--text-muted);">Listado general de bodegas operativas.</p>
+            </div>
+
+            <!-- Subsección: Productos -->
+            <div id="section-productos" class="app-section hidden">
+                <div class="section-header">
+                    <h2>Inventario de Productos</h2>
+                </div>
+                <p style="color: var(--text-muted);">Control de existencias y precios.</p>
+            </div>
+
+            <!-- Subsección: Movimientos -->
+            <div id="section-movimientos" class="app-section hidden">
+                <div class="section-header">
+                    <h2>Registro de Movimientos</h2>
+                </div>
+                <p style="color: var(--text-muted);">Entradas, salidas y transferencias entre almacenes.</p>
+            </div>
+
+            <!-- Subsección: Auditoría -->
+            <div id="section-auditoria" class="app-section hidden">
+                <div class="section-header">
+                    <h2>Auditoría del Sistema</h2>
+                </div>
+                <p style="color: var(--text-muted);">Trazabilidad de acciones realizadas por usuarios con rol ADMIN.</p>
+            </div>
+
         </div>
 
-        <!-- Panel de Administración -->
-        <div id="adminPanel" class="panel dashboard-card hidden">
-            <h3>Bienvenido, <span id="userLogueado"></span></h3>
-            <p>En nuestro enfoque integral, ofrecemos mucho más que un simple registro. Descarga el reporte detallado de auditoría (operaciones INSERT, UPDATE, DELETE) para tu control operativo.</p>
-            <button id="btnDescargarReporte" class="btn-download">📥 Descargar Reporte (.txt)</button>
-        </div>
     </main>
 
-    <!-- Vinculamos nuestra lógica de JavaScript -->
+    <!-- Script JavaScript vinculado -->
     <script src="app.js"></script>
 </body>
 </html>

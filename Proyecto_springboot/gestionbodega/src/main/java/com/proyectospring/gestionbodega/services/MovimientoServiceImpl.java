@@ -1,5 +1,6 @@
 package com.proyectospring.gestionbodega.services;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -35,6 +36,11 @@ public class MovimientoServiceImpl implements MovimientoService {
         this.productoRepository = productoRepository;
         this.bodegaRepository = bodegaRepository;
         this.usuarioRepository = usuarioRepository;
+    }
+
+    @Override
+    public List<Movimiento> buscarPorRangoDeFechas(LocalDateTime fechaInicio, LocalDateTime fechaFin) {
+        return movimientoRepository.buscarPorRangoDeFechas(fechaInicio, fechaFin);
     }
 
 

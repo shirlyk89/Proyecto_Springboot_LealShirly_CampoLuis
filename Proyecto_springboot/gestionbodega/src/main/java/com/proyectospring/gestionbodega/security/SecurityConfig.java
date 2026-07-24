@@ -47,6 +47,15 @@ public class SecurityConfig {
                 .requestMatchers("/bodegas/**", "/api/bodegas/**", "/productos/**", "/api/productos/**", "/movimientos/**", "/api/movimientos/**").hasRole("ADMIN")
                 .requestMatchers("/auditoria/**", "/api/auditoria/**", "/reportes/**", "/api/reportes/**").hasRole("ADMIN")
 
+                .requestMatchers(HttpMethod.POST, "/api/movimientos/**")
+                .hasAnyRole("ADMIN", "EMPLEADO")
+
+                // Modificar o eliminar movimientos
+                .requestMatchers(HttpMethod.PUT, "/api/movimientos/**")
+                .hasAnyRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/movimientos/**")
+                .hasRole("ADMIN")
+
                 // 4. Cualquier otra ruta requiere estar autenticado
                 .anyRequest().authenticated()
             );

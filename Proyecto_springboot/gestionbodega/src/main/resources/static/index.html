@@ -3,37 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Bodega - LogiTrack</title>
-    <style>
-        body { font-family: Arial, sans-serif; padding: 20px; }
-        .panel { border: 1px solid #ccc; padding: 20px; margin-bottom: 20px; max-width: 400px; }
-        .hidden { display: none; }
-        input, button { display: block; margin-bottom: 10px; width: 100%; padding: 8px; }
-    </style>
+    <title>LogiTrack - Gestión de Bodega</title>
+    <!-- Importamos la fuente Poppins -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Vinculamos nuestra hoja de estilos externa -->
+    <meta charset="UTF-8">
+    <title>Gestión de Bodega</title>
+    <!-- Agrega esta línea: -->
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-    <h1>Sistema de Gestión de Bodega</h1>
+    <nav>
+        <div class="logo">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="#00d2ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Logi<span>Track</span>
+        </div>
+        <button id="navBtnLogout" class="nav-btn hidden">Cerrar Sesión</button>
+    </nav>
 
-    <!-- Panel de Login -->
-    <div id="loginPanel" class="panel">
-        <h2>Iniciar Sesión</h2>
-        <form id="loginForm">
-            <input type="text" id="username" placeholder="Nombre de usuario" required>
-            <input type="password" id="password" placeholder="Contraseña" required>
-            <button type="submit">Ingresar</button>
-        </form>
-        <p id="loginMensaje" style="color: red;"></p>
-    </div>
+    <main>
+        <header class="hero">
+            <h1>Gestión de Bodega<br><span class="highlight">a Medida</span></h1>
+            <p>Sistema integral y seguro para el control de inventario. Descarga tus reportes de auditoría generados en tiempo real.</p>
+        </header>
 
-    <!-- Panel de Administración -->
-    <div id="adminPanel" class="panel hidden">
-        <h2>Panel de Administración</h2>
-        <p>Bienvenido, <span id="userLogueado"></span>.</p>
-        <button id="btnDescargarReporte">📥 Descargar Reporte de Auditoría (.txt)</button>
-        <button id="btnCerrarSesion" style="background-color: #ff4d4d; color: white;">Cerrar Sesión</button>
-    </div>
+        <!-- Panel de Login -->
+        <div id="loginPanel" class="panel">
+            <h2>Iniciar Sesión</h2>
+            <form id="loginForm">
+                <input type="text" id="username" placeholder="Nombre de usuario" required>
+                <input type="password" id="password" placeholder="Contraseña" required>
+                <button type="submit" class="btn-submit">Ingresar al Sistema</button>
+            </form>
+            <p id="loginMensaje" class="error-msg"></p>
+        </div>
 
+        <!-- Panel de Administración -->
+        <div id="adminPanel" class="panel dashboard-card hidden">
+            <h3>Bienvenido, <span id="userLogueado"></span></h3>
+            <p>En nuestro enfoque integral, ofrecemos mucho más que un simple registro. Descarga el reporte detallado de auditoría (operaciones INSERT, UPDATE, DELETE) para tu control operativo.</p>
+            <button id="btnDescargarReporte" class="btn-download">📥 Descargar Reporte (.txt)</button>
+        </div>
+    </main>
+
+    <!-- Vinculamos nuestra lógica de JavaScript -->
     <script src="app.js"></script>
 </body>
 </html>

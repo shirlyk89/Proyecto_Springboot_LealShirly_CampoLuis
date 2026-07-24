@@ -27,35 +27,31 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+            // 1. Habilitar CORS y desactivar CSRF
+            .cors(org.springframework.security.config.Customizer.withDefaults())
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // 1. Las rutas de login y registro son públicas (no piden token)
-                .requestMatchers("/api/auth/**", "/error").permitAll() 
-                
-                // 2. Solo lectura (GET) para Empleados y Administradores
-                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/bodegas/**", "/api/productos/**").hasAnyRole("ADMIN", "EMPLEADO")
-                
-                // 3. Creación, edición y eliminación exclusiva para Administradores
-                .requestMatchers("/api/bodegas/**", "/api/productos/**").hasRole("ADMIN")
-                
-                // 4. Cualquier otra ruta que exista o se cree a futuro pedirá token obligatorio
-                // 1. Rutas públicas (Login y Documentación Swagger)
-                .requestMatchers("/auth/**").permitAll()
+                // Permitir peticiones preflight OPTIONS del navegador
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                // 1. Rutas públicas (se acepta tanto /auth/** como /api/auth/**)
+                .requestMatchers("/auth/**", "/api/auth/**").permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                .requestMatchers("/", "/index.html", "/app.js", "/styles.css", "/favicon.ico").permitAll()
 
                 // 2. Rutas con permisos de lectura (Empleados y Admins)
-                .requestMatchers(HttpMethod.GET, "/bodegas/**", "/productos/**").hasAnyRole("ADMIN", "EMPLEADO")
+                .requestMatchers(HttpMethod.GET, "/bodegas/**", "/api/bodegas/**", "/productos/**", "/api/productos/**").hasAnyRole("ADMIN", "EMPLEADO")
 
-                // 3. Rutas exclusivas para el Administrador (Gestión, Auditoría y Reportes)
-                .requestMatchers("/bodegas/**", "/productos/**", "/movimientos/**").hasRole("ADMIN")
-                .requestMatchers("/auditoria/**", "/reportes/**").hasRole("ADMIN")
+                // 3. Rutas exclusivas para el Administrador
+                .requestMatchers("/bodegas/**", "/api/bodegas/**", "/productos/**", "/api/productos/**", "/movimientos/**", "/api/movimientos/**").hasRole("ADMIN")
+                .requestMatchers("/auditoria/**", "/api/auditoria/**", "/reportes/**", "/api/reportes/**").hasRole("ADMIN")
 
-                // 4. Cualquier otra ruta no especificada requiere estar autenticado
+                // 4. Cualquier otra ruta requiere estar autenticado
                 .anyRequest().authenticated()
             );
 
-        // Agregamos el filtro personalizado de JWT antes del filtro estándar de Spring
+        // Agregamos el filtro personalizado de JWT antes del filtro estándar
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -64,6 +60,19 @@ public class SecurityConfig {
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
+    }
+
+    @Bean
+    public org.springframework.web.cors.CorsConfigurationSource corsConfigurationSource() {
+        org.springframework.web.cors.CorsConfiguration configuration = new org.springframework.web.cors.CorsConfiguration();
+        configuration.setAllowedOriginPatterns(java.util.List.of("*"));
+        configuration.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(java.util.List.of("*"));
+        configuration.setAllowCredentials(true);
+        
+        org.springframework.web.cors.UrlBasedCorsConfigurationSource source = new org.springframework.web.cors.UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
 
     @Bean

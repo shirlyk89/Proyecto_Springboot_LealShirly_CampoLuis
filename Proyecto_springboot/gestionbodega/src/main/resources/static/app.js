@@ -29,9 +29,14 @@ loginForm.addEventListener('submit', async (e) => {
         });
 
         if (response.ok) {
-            const data = await response.text(); 
+            const rawData = await response.text();
+            let token = rawData;
+        try {
+            const jsonObj = JSON.parse(rawData);
+            token = jsonObj.token || jsonObj.jwt || jsonObj.accessToken || rawData;
+        } catch (err) {}
+            localStorage.setItem('jwt_token', token.trim());
             
-            localStorage.setItem('jwt_token', data);
             localStorage.setItem('username', username);
             mostrarPanelAdmin();
             loginMensaje.innerText = '';
@@ -48,7 +53,7 @@ btnDescargarReporte.addEventListener('click', async () => {
     const token = localStorage.getItem('jwt_token');
     
     try {
-        const response = await fetch('/reportes/auditoria/txt', {
+        const response = await fetch('/api/reportes/auditoria/txt', {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}` 

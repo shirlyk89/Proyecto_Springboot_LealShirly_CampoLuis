@@ -52,13 +52,21 @@ public class AuthController {
     public ResponseEntity<JwtResponse> login(@RequestBody LoginRequest request) {
         // Spring Security maneja la verificación de la contraseña aquí
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
-        );
+            new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
+    );
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        
-        // Generamos el token y lo devolvemos
-        String jwt = jwtProvider.generateToken(authentication);
-        return ResponseEntity.ok(new JwtResponse(jwt));
+    SecurityContextHolder.getContext().setAuthentication(authentication);
+    
+    // Extraemos el rol (Authority) del usuario autenticado
+    org.springframework.security.core.userdetails.UserDetails userDetails = 
+        (org.springframework.security.core.userdetails.UserDetails) authentication.getPrincipal();
+    
+    String rol = userDetails.getAuthorities().iterator().next().getAuthority();
+    
+    // Generamos el token
+    String jwt = jwtProvider.generateToken(authentication);
+    
+    // Devolvemos el token Y el rol al frontend
+    return ResponseEntity.ok(new JwtResponse(jwt, rol));
     }
 }

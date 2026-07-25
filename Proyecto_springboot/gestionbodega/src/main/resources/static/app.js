@@ -157,21 +157,23 @@ function configurarEventosAuth() {
         const mensaje = document.getElementById('loginMensaje');
         
         try {
-            // Ejemplo de llamada real:
-            // const res = await fetchAPI('/auth/login', 'POST', { username, password });
+
+            mensaje.textContent = "Conectando al servidor...";
             
-            // SIMULACIÓN PARA PRUEBAS (Reemplaza por el código de arriba)
-            if (username && password) {
-                const simulacionAdmin = username.toLowerCase().includes('admin');
-                localStorage.setItem('jwt_token', 'token_simulado_123');
-                localStorage.setItem('user_role', simulacionAdmin ? 'ADMIN' : 'USER');
-                localStorage.setItem('username', username);
-                verificarSesion();
-            } else {
-                throw new Error('Credenciales inválidas');
-            }
+            // Petición real usando la función fetchAPI que ya configuramos
+            const res = await fetchAPI('/auth/login', 'POST', { 
+                username: username, 
+                password: password 
+            });
+            localStorage.setItem('jwt_token', res.token);
+            localStorage.setItem('user_role', res.rol);
+            localStorage.setItem('username', username);
+            
+            // 3. Entramos al sistema
+            verificarSesion();
+           
         } catch (error) {
-            mensaje.textContent = error.message;
+            mensaje.textContent = error.message || 'Credenciales inválidas';
         }
     });
 
@@ -232,13 +234,8 @@ async function cargarBodegas() {
     tbody.innerHTML = '<tr><td colspan="5">Cargando...</td></tr>';
     
     try {
-        // const bodegas = await fetchAPI('/bodegas');
-        
-        // Simulación de datos
-        const bodegas = [
-            { id: 1, nombre: 'Bodega Central', ubicacion: 'Norte', capacidad: 1000, encargado: 'Juan Pérez' },
-            { id: 2, nombre: 'Bodega Sur', ubicacion: 'Sur', capacidad: 500, encargado: 'Ana Gómez' }
-        ];
+        // Petición real usando tu fetchAPI conectado al backend
+        const bodegas = await fetchAPI('/bodegas', 'GET');
 
         tbody.innerHTML = '';
         bodegas.forEach(b => {
@@ -260,7 +257,169 @@ async function cargarBodegas() {
             `;
         });
     } catch (error) {
+        console.error("Error al cargar bodegas:", error);
         tbody.innerHTML = '<tr><td colspan="5">Error al cargar datos</td></tr>';
+    }
+}
+
+async function cargarBodegasSelect() {
+    const selectBodega = document.getElementById('prodBodega');
+    if (!selectBodega) return;
+
+    try {
+        const response = await fetchAPI('/api/bodegas'); // Ajusta la ruta según tu endpoint de bodegas
+        if (!response.ok) {
+            throw new Error('Error al cargar las bodegas');
+        }
+
+        const bodegas = await response.json();
+        
+        // Limpiamos opciones previas dejando solo la por defecto
+        selectBodega.innerHTML = '<option value="">Seleccione una bodega...</option>';
+
+        bodegas.forEach(bodega => {
+            const option = document.createElement('option');
+            option.value = bodega.id; // El ID que espera tu entidad Producto -> bodega: { id: ... }
+            option.textContent = bodega.nombre; // El nombre visible para el usuario
+            selectBodega.appendChild(option);
+        });
+
+    } catch (error) {
+        console.error('Error al poblar el select de bodegas:', error);
+    }
+}
+
+
+// =========================================================
+// MÓDULO: BODEGAS
+// =========================================================
+
+async function cargarBodegas() {
+    const tbody = document.getElementById('tablaBodegasBody');
+    if (!tbody) return;
+
+    try {
+        const response = await fetchAPI('/api/bodegas');
+        if (!response.ok) throw new Error('Error al cargar bodegas');
+
+        const bodegas = await response.json();
+        tbody.innerHTML = '';
+
+        if (bodegas.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No hay bodegas registradas</td></tr>';
+            return;
+        }
+
+        bodegas.forEach(bodega => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${bodega.id}</td>
+                <td>${bodega.nombre}</td>
+                <td>${bodega.ubicacion || 'N/D'}</td>
+                <td>
+                    <button class="btn-sm btn-edit" onclick="editarBodega(${bodega.id})">Editar</button>
+                    <button class="btn-sm btn-delete" onclick="eliminarBodega(${bodega.id})">Eliminar</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+// Controles para mostrar/ocultar el formulario de bodegas
+document.getElementById('btnNuevaBodega')?.addEventListener('click', () => {
+    document.getElementById('formBodega').reset();
+    document.getElementById('bodegaId').value = '';
+    document.getElementById('formBodegaContainer').classList.remove('hidden');
+});
+
+document.getElementById('btnCancelarBodega')?.addEventListener('click', () => {
+    document.getElementById('formBodega').reset();
+    document.getElementById('bodegaId').value = '';
+    document.getElementById('formBodegaContainer').classList.add('hidden');
+});
+
+// Guardar o Actualizar Bodega (POST / PUT)
+document.getElementById('formBodega')?.addEventListener('submit', async function(event) {
+    event.preventDefault();
+
+    const id = document.getElementById('bodegaId').value;
+    const esEdicion = id !== "";
+
+    const bodegaData = {
+        nombre: document.getElementById('bodegaNombre').value.trim(),
+        ubicacion: document.getElementById('bodegaUbicacion')?.value.trim() || ''
+    };
+
+    const endpoint = esEdicion ? `/api/bodegas/${id}` : '/api/bodegas';
+    const metodo = esEdicion ? 'PUT' : 'POST';
+
+    try {
+        const response = await fetchAPI(endpoint, {
+            method: metodo,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(bodegaData)
+        });
+
+        if (!response.ok) throw new Error('Error al guardar la bodega');
+
+        alert(esEdicion ? '¡Bodega actualizada exitosamente!' : '¡Bodega creada exitosamente!');
+        
+        document.getElementById('formBodega').reset();
+        document.getElementById('bodegaId').value = '';
+        document.getElementById('formBodegaContainer').classList.add('hidden');
+        
+        cargarBodegas();
+        // Actualizamos también los selects de bodegas en otros módulos si es necesario
+        if (typeof cargarBodegasSelect === 'function') cargarBodegasSelect();
+
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Hubo un error al procesar la solicitud.');
+    }
+});
+
+// Cargar datos en el formulario para editar
+async function editarBodega(id) {
+    try {
+        const response = await fetchAPI(`/api/bodegas/${id}`);
+        if (!response.ok) throw new Error('No se pudo obtener la bodega');
+
+        const bodega = await response.json();
+
+        document.getElementById('bodegaId').value = bodega.id;
+        document.getElementById('bodegaNombre').value = bodega.nombre;
+        document.getElementById('bodegaUbicacion').value = bodega.ubicacion || '';
+
+        document.getElementById('formBodegaContainer').classList.remove('hidden');
+    } catch (error) {
+        console.error('Error:', error);
+        alert('No se pudo cargar la bodega.');
+    }
+}
+
+// Eliminar Bodega (DELETE)
+async function eliminarBodega(id) {
+    if (!confirm('¿Estás seguro de eliminar esta bodega? Podría afectar a los productos asociados.')) {
+        return;
+    }
+
+    try {
+        const response = await fetchAPI(`/api/bodegas/${id}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) throw new Error('No se pudo eliminar la bodega');
+
+        alert('Bodega eliminada correctamente');
+        cargarBodegas();
+        if (typeof cargarBodegasSelect === 'function') cargarBodegasSelect();
+
+    } catch (error) {
+        console.error('Error:', error);
+        alert('No se pudo eliminar la bodega (puede que tenga productos o movimientos vinculados).');
     }
 }
 
@@ -268,89 +427,374 @@ async function cargarBodegas() {
 // MÓDULO: PRODUCTOS
 // =========================================================
 async function cargarProductos() {
-    const tbody = document.getElementById('tablaProductosBody');
-    const soloStockBajo = document.getElementById('filtroStockBajo').checked;
-    
+    const tbody = document.getElementById('tablaProductosBody'); // O document.querySelector('#tablaProductosBody');
+    if (!tbody) return;
+
+    // Opcional: Verificamos si el switch/checkbox de stock bajo está activo
+    const checkboxStockBajo = document.getElementById('filtroStockBajo');
+    const soloStockBajo = checkboxStockBajo ? checkboxStockBajo.checked : false;
+
     try {
-        // Lógica de URL con parámetros
-        // let url = '/productos';
-        // if (soloStockBajo) url += '?stockMaximo=9';
-        // const productos = await fetchAPI(url);
+        // Seleccionamos dinámicamente la URL según el filtro de stock bajo
+        const endpoint = soloStockBajo ? '/api/productos/stock-bajo' : '/api/productos';
+        
+        const response = await fetchAPI(endpoint);
+        
+        if (!response.ok) {
+            throw new Error('Error al obtener la lista de productos');
+        }
 
-        // Simulación
-        let productos = [
-            { id: 1, nombre: 'Laptop Dell', categoria: 'Electrónica', stock: 15, precio: 1200.50 },
-            { id: 2, nombre: 'Teclado Mecánico', categoria: 'Accesorios', stock: 5, precio: 85.00 },
-            { id: 3, nombre: 'Monitor 24"', categoria: 'Electrónica', stock: 8, precio: 210.00 }
-        ];
-
-        if (soloStockBajo) productos = productos.filter(p => p.stock < 10);
-
+        const productos = await response.json();
         tbody.innerHTML = '';
-        productos.forEach(p => {
-            tbody.innerHTML += `
-                <tr>
-                    <td>${p.nombre}</td>
-                    <td>${p.categoria}</td>
-                    <td style="color: ${p.stock < 10 ? 'var(--danger-color)' : 'inherit'}">${p.stock}</td>
-                    <td>$${p.precio.toFixed(2)}</td>
-                    <td class="col-acciones acciones-flex">
-                        <button class="btn-outline btn-sm" onclick="editarProducto(${p.id})">Editar</button>
-                        <button class="btn-outline btn-sm btn-danger" onclick="eliminarProducto(${p.id})">Eliminar</button>
-                    </td>
-                </tr>
+
+        if (productos.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center">No se encontraron productos</td></tr>`;
+            return;
+        }
+
+        productos.forEach(producto => {
+            const tr = document.createElement('tr');
+            
+            tr.innerHTML = `
+                <td>${producto.id}</td>
+                <td>${producto.nombre}</td>
+                <td>${producto.descripcion || 'Sin descripción'}</td>
+                <td>$${Number(producto.precio).toFixed(2)}</td>
+                <td><span class="badge ${producto.stock <= 10 ? 'bg-danger' : 'bg-success'}">${producto.stock}</span></td>
+                <td>${producto.bodega ? producto.bodega.nombre : 'Sin bodega'}</td>
+                <td>
+                    <button class="btn btn-sm btn-primary" onclick="editarProducto(${producto.id})">Editar</button>
+                    ${window.esAdmin ? `<button class="btn btn-sm btn-danger" onclick="eliminarProducto(${producto.id})">Eliminar</button>` : ''}
+                </td>
             `;
+            
+            tbody.appendChild(tr);
         });
+
     } catch (error) {
-        console.error(error);
+        console.error('Error:', error);
+        alert('No se pudieron cargar los productos.');
     }
 }
 
-// =========================================================
-// MÓDULO: MOVIMIENTOS
-// =========================================================
-async function cargarMovimientosYFormulario() {
-    // 1. Cargar selects del formulario (Bodegas y Productos)
-    // const productos = await fetchAPI('/productos');
-    // const bodegas = await fetchAPI('/bodegas');
+
+
+document.getElementById('formProducto').addEventListener('submit', async function(event) {
+    event.preventDefault(); // Evita que la página se recargue
+
+    // Recolectamos los datos adaptados a tu entidad de Java
+    const productoData = {
+        nombre: document.getElementById('prodNombre').value.trim(),
+        descripcion: document.getElementById('prodDescripcion')?.value.trim() || '', // Si tienes el campo descripción
+        precio: parseFloat(document.getElementById('prodPrecio').value),
+        stock: parseInt(document.getElementById('prodStock').value, 10),
+        bodega: {
+            id: parseInt(document.getElementById('prodBodega').value, 10) // ID de la bodega seleccionada
+        }
+    };
+
+    try {
+        const response = await fetchAPI('/api/productos', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(productoData)
+        });
+
+        if (!response.ok) {
+            throw new Error('Error al registrar el producto');
+        }
+
+        alert('¡Producto creado exitosamente!');
+        
+        // Limpiamos el formulario y refrescamos la tabla
+        document.getElementById('formProducto').reset();
+        cargarProductos();
+
+    } catch (error) {
+        console.error('Error en el registro:', error);
+        alert('Hubo un error al guardar el producto.');
+    }
+});
+
+// Opcional: Función para consultar directamente los productos con stock bajo usando tu endpoint dedicado
+async function cargarProductosStockBajo(limite = 10) {
+    try {
+        const response = await fetchAPI(`/api/productos/stock-bajo?limite=${limite}`);
+        if (!response.ok) throw new Error('Error al filtrar stock bajo');
+        
+        const productosBajos = await response.json();
+        console.log('Productos con stock bajo:', productosBajos); // Corregido aquí
+        // Aquí puedes renderizar en una sección de alertas o modal independiente
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+
+
+async function eliminarProducto(id) {
+    if (!confirm('¿Estás seguro de que deseas eliminar este producto?')) {
+        return;
+    }
+
+    try {
+        const response = await fetchAPI(`/api/productos/${id}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            throw new Error('Error al eliminar el producto');
+        }
+
+        alert('Producto eliminado correctamente');
+        cargarProductos(); // Refrescamos la tabla
+
+    } catch (error) {
+        console.error('Error:', error);
+        alert('No se pudo eliminar el producto.');
+    }
+}
+
+
+async function editarProducto(id) {
+    try {
+        const response = await fetchAPI(`/api/productos/${id}`);
+        if (!response.ok) {
+            throw new Error('No se pudo obtener la información del producto');
+        }
+
+        const producto = await response.json();
+
+        // Rellenamos los campos del formulario con los datos actuales
+        document.getElementById('productoId').value = producto.id;
+        document.getElementById('prodNombre').value = producto.nombre;
+        document.getElementById('prodDescripcion').value = producto.descripcion || '';
+        document.getElementById('prodPrecio').value = producto.precio;
+        document.getElementById('prodStock').value = producto.stock;
+        
+        // Seleccionamos la bodega correspondiente en el <select>
+        if (producto.bodega) {
+            document.getElementById('prodBodega').value = producto.bodega.id;
+        }
+
+        // Mostramos el contenedor del formulario (si estaba oculto)
+        document.getElementById('formProductoContainer').classList.remove('hidden');
+
+    } catch (error) {
+        console.error('Error:', error);
+        alert('No se pudo cargar el producto para editar.');
+    }
+}
+
+
+
+document.getElementById('formProducto').addEventListener('submit', async function(event) {
+    event.preventDefault(); 
+
+    const id = document.getElementById('productoId').value;
+    const esEdicion = id !== ""; // Si tiene ID, estamos editando; si está vacío, es nuevo.
+
+    const productoData = {
+        nombre: document.getElementById('prodNombre').value.trim(),
+        descripcion: document.getElementById('prodDescripcion')?.value.trim() || '',
+        precio: parseFloat(document.getElementById('prodPrecio').value),
+        stock: parseInt(document.getElementById('prodStock').value, 10),
+        bodega: {
+            id: parseInt(document.getElementById('prodBodega').value, 10)
+        }
+    };
+
+    // Definimos la URL y el método HTTP dependiendo de si es crear o actualizar
+    const endpoint = esEdicion ? `/api/productos/${id}` : '/api/productos';
+    const metodo = esEdicion ? 'PUT' : 'POST';
+
+    try {
+        const response = await fetchAPI(endpoint, {
+            method: metodo,
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(productoData)
+        });
+
+        if (!response.ok) {
+            throw new Error('Error al guardar el producto');
+        }
+
+        alert(esEdicion ? '¡Producto actualizado exitosamente!' : '¡Producto creado exitosamente!');
+        
+        // Limpiamos el formulario, borramos el ID oculto y refrescamos la tabla
+        document.getElementById('formProducto').reset();
+        document.getElementById('productoId').value = '';
+        document.getElementById('formProductoContainer').classList.add('hidden'); // Ocultar formulario si deseas
+        cargarProductos();
+
+    } catch (error) {
+        console.error('Error en el guardado:', error);
+        alert('Hubo un error al procesar la solicitud.');
+    }
+});
+
+
+document.getElementById('btnNuevoProducto').addEventListener('click', function() {
+    // Limpiamos el formulario por si quedó algo escrito
+    document.getElementById('formProducto').reset();
+    document.getElementById('productoId').value = ''; // Aseguramos que no tenga ID (modo creación)
     
+    // Mostramos el contenedor del formulario quitando la clase 'hidden'
+    document.getElementById('formProductoContainer').classList.remove('hidden');
+});
+
+// Y de paso, si tienes el botón de "Cancelar" dentro del formulario, aprovecha y agrégale esto:
+document.getElementById('btnCancelarProducto').addEventListener('click', function() {
+    document.getElementById('formProducto').reset();
+    document.getElementById('productoId').value = '';
+    document.getElementById('formProductoContainer').classList.add('hidden'); // Oculta el formulario
+});
+
+
+// =========================================================
+// MÓDULO: MOVIMIENTOS (Versión unificada y conectada)
+// =========================================================
+
+// 1. Cargar selects de productos y bodegas, y la tabla de movimientos
+async function cargarMovimientosYFormulario() {
     const movProducto = document.getElementById('movProducto');
     const movBodegaOrigen = document.getElementById('movBodegaOrigen');
     const movBodegaDestino = document.getElementById('movBodegaDestino');
     
-    // Simulación llenado de selects
-    movProducto.innerHTML = '<option value="1">Laptop Dell</option><option value="2">Teclado Mecánico</option>';
-    movBodegaOrigen.innerHTML = '<option value="">Ninguna (Entrada nueva)</option><option value="1">Bodega Central</option>';
-    movBodegaDestino.innerHTML = '<option value="1">Bodega Central</option><option value="2">Bodega Sur</option>';
+    // Cargar productos en el select
+    if (movProducto) {
+        try {
+            const resProductos = await fetchAPI('/api/productos');
+            if (resProductos.ok) {
+                const productos = await resProductos.json();
+                movProducto.innerHTML = '<option value="">Seleccione un producto...</option>';
+                productos.forEach(prod => {
+                    movProducto.innerHTML += `<option value="${prod.id}">${prod.nombre} (Stock: ${prod.stock})</option>`;
+                });
+            }
+        } catch (error) {
+            console.error('Error al cargar productos:', error);
+        }
+    }
 
-    // 2. Cargar tabla con filtros de fecha
-    const fechaDesde = document.getElementById('filtroMovDesde').value;
-    const fechaHasta = document.getElementById('filtroMovHasta').value;
-    
+    // Cargar bodegas en los selects de Origen y Destino
+    if (movBodegaOrigen && movBodegaDestino) {
+        try {
+            const resBodegas = await fetchAPI('/api/bodegas');
+            if (resBodegas.ok) {
+                const bodegas = await resBodegas.json();
+                
+                let optionsOrigen = '<option value="">Ninguna / Seleccione...</option>';
+                let optionsDestino = '<option value="">Seleccione una bodega...</option>';
+                
+                bodegas.forEach(bodega => {
+                    optionsOrigen += `<option value="${bodega.id}">${bodega.nombre}</option>`;
+                    optionsDestino += `<option value="${bodega.id}">${bodega.nombre}</option>`;
+                });
+
+                movBodegaOrigen.innerHTML = optionsOrigen;
+                movBodegaDestino.innerHTML = optionsDestino;
+            }
+        } catch (error) {
+            console.error('Error al cargar bodegas:', error);
+        }
+    }
+
+    // Cargar tabla del historial de movimientos
     const tbody = document.getElementById('tablaMovimientosBody');
-    // let url = `/movimientos?desde=${fechaDesde}&hasta=${fechaHasta}`;
-    // const movimientos = await fetchAPI(url);
-    
-    // Simulación
-    const movimientos = [
-        { fecha: '2023-10-25', tipo: 'ENTRADA', producto: 'Laptop Dell', origen: '-', destino: 'Bodega Central', cantidad: 10 },
-        { fecha: '2023-10-26', tipo: 'TRANSFERENCIA', producto: 'Teclado Mecánico', origen: 'Bodega Central', destino: 'Bodega Sur', cantidad: 2 }
-    ];
+    if (!tbody) return;
 
-    tbody.innerHTML = '';
-    movimientos.forEach(m => {
-        tbody.innerHTML += `
-            <tr>
-                <td>${m.fecha}</td>
-                <td><span class="badge-rol">${m.tipo}</span></td>
-                <td>${m.producto}</td>
-                <td>${m.origen}</td>
-                <td>${m.destino}</td>
-                <td>${m.cantidad}</td>
-            </tr>
-        `;
-    });
+    try {
+        const response = await fetchAPI('/api/movimientos');
+        if (!response.ok) throw new Error('Error al cargar los movimientos');
+
+        const movimientos = await response.json();
+        tbody.innerHTML = '';
+
+        if (movimientos.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No hay movimientos registrados</td></tr>';
+            return;
+        }
+
+        movimientos.forEach(m => {
+            const origenNombre = m.bodegaOrigen ? m.bodegaOrigen.nombre : '-';
+            const destinoNombre = m.bodegaDestino ? m.bodegaDestino.nombre : '-';
+            const productoNombre = m.producto ? m.producto.nombre : 'N/D';
+            const fechaFormateada = m.fecha ? new Date(m.fecha).toLocaleString() : '-';
+
+            tbody.innerHTML += `
+                <tr>
+                    <td>${fechaFormateada}</td>
+                    <td><span class="badge ${m.tipo ? m.tipo.toLowerCase() : ''}">${m.tipo}</span></td>
+                    <td>${productoNombre}</td>
+                    <td>${origenNombre}</td>
+                    <td>${destinoNombre}</td>
+                    <td>${m.cantidad}</td>
+                </tr>
+            `;
+        });
+    } catch (error) {
+        console.error('Error al cargar tabla de movimientos:', error);
+    }
 }
+
+// 2. Manejo del envío del formulario de movimientos (POST)
+document.getElementById('formMovimiento')?.addEventListener('submit', async function(event) {
+    event.preventDefault();
+
+    const tipo = document.getElementById('movTipo').value;
+    const productoId = document.getElementById('movProducto').value;
+    const bodegaOrigenId = document.getElementById('movBodegaOrigen').value;
+    const bodegaDestinoId = document.getElementById('movBodegaDestino').value;
+    const cantidad = document.getElementById('movCantidad').value;
+
+    const movimientoData = {
+        tipo: tipo,
+        cantidad: parseInt(cantidad, 10),
+        producto: { id: parseInt(productoId, 10) },
+        bodegaOrigen: bodegaOrigenId ? { id: parseInt(bodegaOrigenId, 10) } : null,
+        bodegaDestino: bodegaDestinoId ? { id: parseInt(bodegaDestinoId, 10) } : null
+    };
+
+    try {
+        const response = await fetchAPI('/api/movimientos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(movimientoData)
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText || 'Error al registrar el movimiento');
+        }
+
+        alert('¡Movimiento registrado exitosamente!');
+        this.reset();
+        
+        // Refrescamos la tabla de movimientos y la de productos para ver el stock actualizado
+        cargarMovimientosYFormulario();
+        if (typeof cargarProductos === 'function') cargarProductos();
+
+    } catch (error) {
+        console.error('Error:', error);
+        alert('No se pudo registrar el movimiento: ' + error.message);
+    }
+});
+
+// 3. Evento para el botón de filtrar movimientos
+document.getElementById('btnFiltrarMovimientos')?.addEventListener('click', function(event) {
+    event.preventDefault();
+    cargarMovimientosYFormulario();
+});
+
+// 4. Inicialización al cargar la página
+document.addEventListener('DOMContentLoaded', () => {
+    cargarMovimientosYFormulario();
+});
 
 // =========================================================
 // MÓDULO: AUDITORÍA Y REPORTES

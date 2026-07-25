@@ -32,32 +32,32 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // Permitir peticiones preflight OPTIONS del navegador
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                    // 1. Rutas públicas
+            .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+            .requestMatchers("/auth/**", "/api/auth/**").permitAll()
+            .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+            .requestMatchers("/", "/index.html", "/app.js", "/styles.css", "/favicon.ico").permitAll()
 
-                // 1. Rutas públicas (se acepta tanto /auth/** como /api/auth/**)
-                .requestMatchers("/auth/**", "/api/auth/**").permitAll()
-                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                .requestMatchers("/", "/index.html", "/app.js", "/styles.css", "/favicon.ico").permitAll()
+            // 2. LECTURA (GET): Ambos roles pueden ver
+            .requestMatchers(HttpMethod.GET, "/api/bodegas/**", "/api/productos/**", "/api/movimientos/**").hasAnyRole("ADMIN", "EMPLEADO")
 
-                // 2. Rutas con permisos de lectura (Empleados y Admins)
-                .requestMatchers(HttpMethod.GET, "/bodegas/**", "/api/bodegas/**", "/productos/**", "/api/productos/**").hasAnyRole("ADMIN", "EMPLEADO")
+            // 3. OPERACIÓN (POST): Ambos roles pueden registrar (ej. realizar un movimiento)
+            .requestMatchers(HttpMethod.POST, "/api/movimientos/**").hasAnyRole("ADMIN", "EMPLEADO")
 
-                // 3. Rutas exclusivas para el Administrador
-                .requestMatchers("/bodegas/**", "/api/bodegas/**", "/productos/**", "/api/productos/**", "/movimientos/**", "/api/movimientos/**").hasRole("ADMIN")
-                .requestMatchers("/auditoria/**", "/api/auditoria/**", "/reportes/**", "/api/reportes/**").hasRole("ADMIN")
+            // 4. ADMINISTRACIÓN EXCLUSIVA: Solo ADMIN puede modificar o borrar
+            .requestMatchers(HttpMethod.PUT, "/api/movimientos/**").hasRole("ADMIN")
+            .requestMatchers(HttpMethod.DELETE, "/api/movimientos/**").hasRole("ADMIN")
+            
+            // (Opcional: Si quieres proteger Bodegas/Productos para ediciones solo ADMIN)
+            .requestMatchers(HttpMethod.POST, "/api/bodegas/**", "/api/productos/**").hasRole("ADMIN")
+            .requestMatchers(HttpMethod.PUT, "/api/bodegas/**", "/api/productos/**").hasRole("ADMIN")
+            .requestMatchers(HttpMethod.DELETE, "/api/bodegas/**", "/api/productos/**").hasRole("ADMIN")
 
-                .requestMatchers(HttpMethod.POST, "/api/movimientos/**")
-                .hasAnyRole("ADMIN", "EMPLEADO")
+            // 5. Reportes (Solo ADMIN)
+            .requestMatchers("/api/reportes/**").hasRole("ADMIN")
 
-                // Modificar o eliminar movimientos
-                .requestMatchers(HttpMethod.PUT, "/api/movimientos/**")
-                .hasAnyRole("ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/api/movimientos/**")
-                .hasRole("ADMIN")
-
-                // 4. Cualquier otra ruta requiere estar autenticado
-                .anyRequest().authenticated()
+            // 6. Cualquier otra ruta requiere autenticación
+            .anyRequest().authenticated()
             );
 
         // Agregamos el filtro personalizado de JWT antes del filtro estándar

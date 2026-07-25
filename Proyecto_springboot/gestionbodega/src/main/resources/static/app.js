@@ -27,34 +27,37 @@ document.addEventListener('DOMContentLoaded', () => {
 // UTILIDADES PARA API (FETCH CON JWT)
 // =========================================================
 async function fetchAPI(endpoint, method = 'GET', body = null) {
-    const headers = {
-        'Content-Type': 'application/json'
-    };
-
-    if (currentToken) {
-        headers['Authorization'] = `Bearer ${currentToken}`;
-    }
+    const token = localStorage.getItem('jwt_token');
+    const headers = { 'Content-Type': 'application/json' };
+    
+    if (token) headers['Authorization'] = `Bearer ${token}`;
 
     const config = { method, headers };
     if (body) config.body = JSON.stringify(body);
 
-    try {
-        const response = await fetch(`${API_URL}${endpoint}`, config);
+    // CORRECCIÓN AQUÍ: ${endpoint} en lugar de$/{endpoint}
+    const response = await fetch(`http://localhost:8080/api${endpoint}`, config);
+
+    // AQUÍ ESTÁ LA MAGIA DE LA SESIÓN:
+    if (!response.ok) {
+        if (response.status === 401) {
+            // 401: Token inválido o expirado. SÍ cerramos sesión.
+            cerrarSesion(); 
+            throw new Error('Sesión expirada. Vuelve a iniciar sesión.');
+        } 
         
-        // Manejo de errores de autenticación
-        if (response.status === 401 || response.status === 403) {
-            cerrarSesion();
-            throw new Error('Sesión expirada o sin permisos');
+        if (response.status === 403) {
+            // 403: El token es válido, pero el rol (Empleado) no permite esta acción.
+            // NO cerramos sesión, solo lanzamos el error o alerta.
+            throw new Error('Acceso denegado: No tienes permisos para esta acción.');
         }
 
-        const data = await response.json().catch(() => ({})); 
-        if (!response.ok) throw new Error(data.message || 'Error en la petición');
-        return data;
-    } catch (error) {
-        console.error('Error API:', error);
-        alert(error.message);
-        throw error;
+        throw new Error('Error en la petición al servidor.');
     }
+
+    // Retorna la respuesta si todo salió bien
+    const text = await response.text();
+    return text ? JSON.parse(text) : {};
 }
 
 // =========================================================
@@ -67,27 +70,32 @@ function verificarSesion() {
 
     if (currentToken) {
         // Mostrar sistema, ocultar login
-        sectionAuth.classList.add('hidden');
-        mainNavbar.classList.remove('hidden');
-        systemPanel.classList.remove('hidden');
+        if(sectionAuth) sectionAuth.classList.add('hidden');
+        if(mainNavbar) mainNavbar.classList.remove('hidden');
+        if(systemPanel) systemPanel.classList.remove('hidden');
         
         // Setear datos de usuario en Navbar
-        document.getElementById('userLogueado').textContent = username;
-        document.getElementById('rolLogueado').textContent = currentRole;
+        const userLogueado = document.getElementById('userLogueado');
+        const rolLogueado = document.getElementById('rolLogueado');
+        if(userLogueado) userLogueado.textContent = username;
+        if(rolLogueado) rolLogueado.textContent = currentRole;
 
         // Control de Rol para Auditoría y botones
-        if (currentRole === 'ADMIN') {
-            document.getElementById('navAuditoria').classList.remove('hidden');
-        } else {
-            document.getElementById('navAuditoria').classList.add('hidden');
+        const navAuditoria = document.getElementById('navAuditoria');
+        if(navAuditoria) {
+            if (currentRole === 'ADMIN') {
+                navAuditoria.classList.remove('hidden');
+            } else {
+                navAuditoria.classList.add('hidden');
+            }
         }
 
         cargarSeccion('dashboard');
     } else {
         // Mostrar login, ocultar sistema
-        sectionAuth.classList.remove('hidden');
-        mainNavbar.classList.add('hidden');
-        systemPanel.classList.add('hidden');
+        if(sectionAuth) sectionAuth.classList.remove('hidden');
+        if(mainNavbar) mainNavbar.classList.add('hidden');
+        if(systemPanel) systemPanel.classList.add('hidden');
     }
 }
 
@@ -96,7 +104,8 @@ function cargarSeccion(seccionId) {
     document.querySelectorAll('.app-section').forEach(sec => sec.classList.add('hidden'));
     
     // Mostrar la seleccionada
-    document.getElementById(`section-${seccionId}`).classList.remove('hidden');
+    const seccionActiva = document.getElementById(`section-${seccionId}`);
+    if(seccionActiva) seccionActiva.classList.remove('hidden');
 
     // Actualizar estado activo en navbar
     navLinks.forEach(link => {
@@ -122,7 +131,8 @@ function configurarEventosNavegacion() {
         });
     });
 
-    document.getElementById('navBtnLogout').addEventListener('click', cerrarSesion);
+    const btnLogout = document.getElementById('navBtnLogout');
+    if(btnLogout) btnLogout.addEventListener('click', cerrarSesion);
 }
 
 function cerrarSesion() {
@@ -137,78 +147,104 @@ function cerrarSesion() {
 // =========================================================
 function configurarEventosAuth() {
     // Toggle entre Login y Registro
-    document.getElementById('showRegister').addEventListener('click', (e) => {
-        e.preventDefault();
-        document.getElementById('loginCard').classList.add('hidden');
-        document.getElementById('registerCard').classList.remove('hidden');
-    });
+    const showRegister = document.getElementById('showRegister');
+    const showLogin = document.getElementById('showLogin');
+    
+    if(showRegister) {
+        showRegister.addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById('loginCard').classList.add('hidden');
+            document.getElementById('registerCard').classList.remove('hidden');
+        });
+    }
 
-    document.getElementById('showLogin').addEventListener('click', (e) => {
-        e.preventDefault();
-        document.getElementById('registerCard').classList.add('hidden');
-        document.getElementById('loginCard').classList.remove('hidden');
-    });
+    if(showLogin) {
+        showLogin.addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById('registerCard').classList.add('hidden');
+            document.getElementById('loginCard').classList.remove('hidden');
+        });
+    }
 
     // Submit Login
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const username = document.getElementById('loginUsername').value;
-        const password = document.getElementById('loginPassword').value;
-        const mensaje = document.getElementById('loginMensaje');
-        
-        try {
-            mensaje.textContent = "Conectando al servidor...";
+    const loginForm = document.getElementById('loginForm');
+    if(loginForm) {
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            const mensaje = document.getElementById('loginMensaje');
             
-            const res = await fetchAPI('/auth/login', 'POST', { 
-                username: username, 
-                password: password 
-            });
-            localStorage.setItem('jwt_token', res.token);
-            localStorage.setItem('user_role', res.rol);
-            localStorage.setItem('username', username);
-            
-            verificarSesion();
-           
-        } catch (error) {
-            mensaje.textContent = error.message || 'Credenciales inválidas';
-        }
-    });
+            try {
+                mensaje.textContent = "Conectando al servidor...";
+                
+                const res = await fetchAPI('/auth/login', 'POST', { 
+                    username: username, 
+                    password: password 
+                });
+                
+                localStorage.setItem('jwt_token', res.token);
+                localStorage.setItem('user_role', res.rol || 'ROLE_EMPLEADO');
+                localStorage.setItem('username', username);
+                
+                mensaje.textContent = "";
+                verificarSesion();
+               
+            } catch (error) {
+                mensaje.textContent = error.message || 'Credenciales inválidas';
+                alert('Error al iniciar sesión: ' + error.message);
+            }
+        });
+    }
 
     // Submit Registro
-    document.getElementById('registerForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const mensaje = document.getElementById('registerMensaje');
+    const registerForm = document.getElementById('registerForm');
+    if(registerForm) {
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const regUsername = document.getElementById('regUsername').value;
+            const regPassword = document.getElementById('regPassword').value;
+            const mensaje = document.getElementById('registerMensaje') || document.createElement('div');
 
-        try {
-            alert('Usuario registrado con éxito. Por favor inicia sesión.');
-            document.getElementById('showLogin').click();
-        } catch (error) {
-            mensaje.textContent = error.message;
-        }
-    });
+            try {
+                mensaje.textContent = "Registrando usuario...";
+                await fetchAPI('/auth/register', 'POST', { 
+                    username: regUsername, 
+                    password: regPassword,
+                    rol: 'ROLE_EMPLEADO' // Valor por defecto
+                });
+                alert('Usuario registrado con éxito. Por favor inicia sesión.');
+                document.getElementById('showLogin').click();
+                mensaje.textContent = "";
+            } catch (error) {
+                mensaje.textContent = error.message;
+                alert('Error al registrar: ' + error.message);
+            }
+        });
+    }
 }
 
 // =========================================================
 // MÓDULO: CONFIGURACIÓN DE EVENTOS DE MÓDULOS
 // =========================================================
 function configurarEventosModulos() {
-    document.getElementById('btnNuevaBodega').addEventListener('click', () => {
+    document.getElementById('btnNuevaBodega')?.addEventListener('click', () => {
         document.getElementById('formBodega').reset();
         document.getElementById('bodegaId').value = '';
         document.getElementById('formBodegaContainer').classList.toggle('hidden');
     });
     
-    document.getElementById('btnCancelarBodega').addEventListener('click', () => {
+    document.getElementById('btnCancelarBodega')?.addEventListener('click', () => {
         document.getElementById('formBodegaContainer').classList.add('hidden');
     });
 
-    document.getElementById('btnNuevoProducto').addEventListener('click', () => {
+    document.getElementById('btnNuevoProducto')?.addEventListener('click', () => {
         document.getElementById('formProducto').reset();
         document.getElementById('productoId').value = '';
         document.getElementById('formProductoContainer').classList.toggle('hidden');
     });
 
-    document.getElementById('btnCancelarProducto').addEventListener('click', () => {
+    document.getElementById('btnCancelarProducto')?.addEventListener('click', () => {
         document.getElementById('formProductoContainer').classList.add('hidden');
     });
 
@@ -249,6 +285,7 @@ async function cargarBodegas() {
         });
     } catch (error) {
         console.error('Error al cargar bodegas:', error);
+        alert('Error al cargar bodegas: ' + error.message);
         tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Error al cargar datos</td></tr>';
     }
 }
@@ -271,6 +308,7 @@ async function cargarBodegasSelect() {
         }
     } catch (error) {
         console.error('Error al poblar el select de bodegas:', error);
+        alert('No se pudieron cargar las bodegas: ' + error.message);
     }
 }
 
@@ -302,6 +340,7 @@ document.getElementById('formBodega')?.addEventListener('submit', async function
 
     } catch (error) {
         console.error('Error:', error);
+        alert('Error al guardar bodega: ' + error.message);
     }
 });
 
@@ -316,6 +355,7 @@ async function editarBodega(id) {
         document.getElementById('formBodegaContainer').classList.remove('hidden');
     } catch (error) {
         console.error('Error:', error);
+        alert('Error al cargar datos para edición: ' + error.message);
     }
 }
 
@@ -331,6 +371,7 @@ async function eliminarBodega(id) {
         cargarBodegasSelect();
     } catch (error) {
         console.error('Error:', error);
+        alert('Error al eliminar bodega: ' + error.message);
     }
 }
 
@@ -374,6 +415,7 @@ async function cargarProductos() {
 
     } catch (error) {
         console.error('Error al cargar productos:', error);
+        alert('Error al cargar productos: ' + error.message);
     }
 }
 
@@ -408,6 +450,7 @@ document.getElementById('formProducto')?.addEventListener('submit', async functi
 
     } catch (error) {
         console.error('Error en el guardado:', error);
+        alert('Error al guardar producto: ' + error.message);
     }
 });
 
@@ -422,6 +465,7 @@ async function eliminarProducto(id) {
         cargarProductos();
     } catch (error) {
         console.error('Error:', error);
+        alert('Error al eliminar producto: ' + error.message);
     }
 }
 
@@ -443,6 +487,7 @@ async function editarProducto(id) {
 
     } catch (error) {
         console.error('Error:', error);
+        alert('Error al obtener datos del producto: ' + error.message);
     }
 }
 
@@ -465,6 +510,7 @@ async function cargarMovimientosYFormulario() {
             }
         } catch (error) {
             console.error('Error al cargar productos:', error);
+            alert('Error al cargar productos para movimientos: ' + error.message);
         }
     }
 
@@ -485,6 +531,7 @@ async function cargarMovimientosYFormulario() {
             }
         } catch (error) {
             console.error('Error al cargar bodegas:', error);
+            alert('Error al cargar bodegas para movimientos: ' + error.message);
         }
     }
 
@@ -519,6 +566,7 @@ async function cargarMovimientosYFormulario() {
         });
     } catch (error) {
         console.error('Error al cargar tabla de movimientos:', error);
+        alert('Error al cargar movimientos: ' + error.message);
     }
 }
 
@@ -550,6 +598,7 @@ document.getElementById('formMovimiento')?.addEventListener('submit', async func
 
     } catch (error) {
         console.error('Error:', error);
+        alert('Error al registrar movimiento: ' + error.message);
     }
 });
 
@@ -578,8 +627,11 @@ async function cargarAuditoria() {
         `;
     });
 
-    document.getElementById('reporteStockBodegas').innerHTML = '<p>Bodega Central: 1200 items<br>Bodega Sur: 450 items</p>';
-    document.getElementById('reporteProductosMovidos').innerHTML = '<p>1. Laptop Dell<br>2. Teclado Mecánico</p>';
+    const reporteStock = document.getElementById('reporteStockBodegas');
+    if(reporteStock) reporteStock.innerHTML = '<p>Bodega Central: 1200 items<br>Bodega Sur: 450 items</p>';
+    
+    const reporteMovidos = document.getElementById('reporteProductosMovidos');
+    if(reporteMovidos) reporteMovidos.innerHTML = '<p>1. Laptop Dell<br>2. Teclado Mecánico</p>';
 }
 
 function descargarReporteTxt() {

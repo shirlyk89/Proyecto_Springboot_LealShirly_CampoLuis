@@ -43,6 +43,7 @@ class ProductoServiceTest {
         producto = new Producto(
                 1L,
                 "Laptop",
+                "Electrónica",
                 "Laptop Lenovo",
                 new BigDecimal("2500000"),
                 10,

@@ -116,11 +116,23 @@ function cargarSeccion(seccionId) {
         }
     });
 
-    // Cargar datos según la sección
-    if (seccionId === 'bodegas') cargarBodegas();
-    if (seccionId === 'productos') cargarProductos();
-    if (seccionId === 'movimientos') cargarMovimientosYFormulario();
-    if (seccionId === 'auditoria' && currentRole === 'ADMIN') cargarAuditoria();
+        // Cargar datos según la sección
+    if (seccionId === 'bodegas') {
+        cargarBodegas();
+    }
+
+    if (seccionId === 'productos') {
+        cargarBodegasSelect();
+        cargarProductos();
+    }
+
+    if (seccionId === 'movimientos') {
+        cargarMovimientosYFormulario();
+    }
+
+    if (seccionId === 'auditoria' && currentRole === 'ADMIN') {
+        cargarAuditoria();
+    }
 }
 
 function configurarEventosNavegacion() {
@@ -238,10 +250,12 @@ function configurarEventosModulos() {
         document.getElementById('formBodegaContainer').classList.add('hidden');
     });
 
-    document.getElementById('btnNuevoProducto')?.addEventListener('click', () => {
-        document.getElementById('formProducto').reset();
-        document.getElementById('productoId').value = '';
-        document.getElementById('formProductoContainer').classList.toggle('hidden');
+    document.getElementById('btnNuevoProducto')?.addEventListener('click', async () => {
+        await cargarBodegasSelect();
+
+    document.getElementById('formProducto').reset();
+    document.getElementById('productoId').value = '';
+    document.getElementById('formProductoContainer').classList.remove('hidden');
     });
 
     document.getElementById('btnCancelarProducto')?.addEventListener('click', () => {
@@ -291,6 +305,7 @@ async function cargarBodegas() {
 }
 
 async function cargarBodegasSelect() {
+    console.log("Se ejecutó cargarBodegasSelect");
     const selectBodega = document.getElementById('prodBodega');
     if (!selectBodega) return;
 
@@ -401,6 +416,7 @@ async function cargarProductos() {
             tr.innerHTML = `
                 <td>${producto.id}</td>
                 <td>${producto.nombre}</td>
+                <td>${producto.categoria}</td>
                 <td>${producto.descripcion || 'Sin descripción'}</td>
                 <td>$${Number(producto.precio).toFixed(2)}</td>
                 <td><span class="badge ${producto.stock <= 10 ? 'bg-danger' : 'bg-success'}">${producto.stock}</span></td>
@@ -427,6 +443,7 @@ document.getElementById('formProducto')?.addEventListener('submit', async functi
 
     const productoData = {
         nombre: document.getElementById('prodNombre').value.trim(),
+        categoria: document.getElementById('prodCategoria').value().trim(),
         descripcion: document.getElementById('prodDescripcion')?.value.trim() || '',
         precio: parseFloat(document.getElementById('prodPrecio').value),
         stock: parseInt(document.getElementById('prodStock').value, 10),
@@ -445,6 +462,7 @@ document.getElementById('formProducto')?.addEventListener('submit', async functi
         
         document.getElementById('formProducto').reset();
         document.getElementById('productoId').value = '';
+        document.getElementById('prodCategoria').value = producto.categoria;
         document.getElementById('formProductoContainer').classList.add('hidden');
         cargarProductos();
 
@@ -471,6 +489,8 @@ async function eliminarProducto(id) {
 
 async function editarProducto(id) {
     try {
+          await cargarBodegasSelect();
+
         const producto = await fetchAPI(`/productos/${id}`);
 
         document.getElementById('productoId').value = producto.id;
@@ -478,12 +498,13 @@ async function editarProducto(id) {
         document.getElementById('prodDescripcion').value = producto.descripcion || '';
         document.getElementById('prodPrecio').value = producto.precio;
         document.getElementById('prodStock').value = producto.stock;
-        
+
         if (producto.bodega) {
             document.getElementById('prodBodega').value = producto.bodega.id;
         }
 
         document.getElementById('formProductoContainer').classList.remove('hidden');
+
 
     } catch (error) {
         console.error('Error:', error);

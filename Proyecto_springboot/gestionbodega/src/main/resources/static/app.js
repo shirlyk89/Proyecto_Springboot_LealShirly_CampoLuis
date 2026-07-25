@@ -35,27 +35,22 @@ async function fetchAPI(endpoint, method = 'GET', body = null) {
     const config = { method, headers };
     if (body) config.body = JSON.stringify(body);
 
-    // CORRECCIÓN AQUÍ: ${endpoint} en lugar de$/{endpoint}
     const response = await fetch(`http://localhost:8080/api${endpoint}`, config);
 
-    // AQUÍ ESTÁ LA MAGIA DE LA SESIÓN:
     if (!response.ok) {
         if (response.status === 401) {
-            // 401: Token inválido o expirado. SÍ cerramos sesión.
             cerrarSesion(); 
             throw new Error('Sesión expirada. Vuelve a iniciar sesión.');
         } 
         
         if (response.status === 403) {
-            // 403: El token es válido, pero el rol (Empleado) no permite esta acción.
-            // NO cerramos sesión, solo lanzamos el error o alerta.
             throw new Error('Acceso denegado: No tienes permisos para esta acción.');
         }
 
-        throw new Error('Error en la petición al servidor.');
+        const errorText = await response.text();
+        throw new Error(errorText);
     }
 
-    // Retorna la respuesta si todo salió bien
     const text = await response.text();
     return text ? JSON.parse(text) : {};
 }

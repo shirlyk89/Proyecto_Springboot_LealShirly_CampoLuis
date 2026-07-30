@@ -3,8 +3,9 @@ package com.proyectospring.gestionbodega.entities;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
+
 @Entity
-@Table(name = "auditorias")
+@Table(name = "auditorias", schema = "logitrack")
 public class Auditoria {
 
     @Id

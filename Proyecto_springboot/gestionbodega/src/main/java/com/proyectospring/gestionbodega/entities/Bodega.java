@@ -1,27 +1,21 @@
 package com.proyectospring.gestionbodega.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.proyectospring.gestionbodega.security.listeners.AuditoriaListener;
+import jakarta.persistence.*;
+import lombok.*;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EntityListeners;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import java.util.List;
 
 @Entity
 @EntityListeners(AuditoriaListener.class)
-@Table(name = "bodega",  schema = "logitrack")
+@Table(name = "bodega", schema = "logitrack")
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
 public class Bodega {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -38,5 +32,13 @@ public class Bodega {
     @Column(nullable = false, length = 225)
     private String encargado;
 
+    // Relación OneToMany para los movimientos donde esta bodega fue ORIGEN
+    @OneToMany(mappedBy = "bodegaOrigen", fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<Movimiento> movimientosOrigen;
 
+    // Relación OneToMany para los movimientos donde esta bodega fue DESTINO
+    @OneToMany(mappedBy = "bodegaDestino", fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<Movimiento> movimientosDestino;
 }

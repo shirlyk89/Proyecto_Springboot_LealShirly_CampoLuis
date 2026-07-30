@@ -1,11 +1,12 @@
 package com.proyectospring.gestionbodega.entities;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.proyectospring.gestionbodega.security.Rol;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "usuarios")
+@Table(name = "usuarios", schema = "logitrack")
 public class Usuario {
 
     @Id
@@ -15,6 +16,7 @@ public class Usuario {
     @Column(unique = true, nullable = false)
     private String username;
 
+    @JsonIgnore
     @Column(nullable = false)
     private String password;
 

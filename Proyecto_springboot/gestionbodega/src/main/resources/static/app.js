@@ -284,10 +284,15 @@ async function cargarBodegas() {
             tr.innerHTML = `
                 <td>${bodega.id}</td>
                 <td>${bodega.nombre}</td>
-                <td>${bodega.ubicacion || 'N/D'}</td>
+                <td>${bodega.ubicacion}</td>
+                <td>${bodega.capacidad}</td>
+                <td>${bodega.encargado}</td>
                 <td>
-                    <button class="btn-sm btn-edit" onclick="editarBodega(${bodega.id})">Editar</button>
-                    <button class="btn-sm btn-delete" onclick="eliminarBodega(${bodega.id})">Eliminar</button>
+                <td class="col-acciones">
+                    <div class="acciones-flex">
+                        <button class="btn-sm btn-outline" onclick="editarBodega(${bodega.id})">Editar</button>
+                        <button class="btn-sm btn-danger" onclick="eliminarBodega(${bodega.id})">Eliminar</button>
+                    </div>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -329,8 +334,10 @@ document.getElementById('formBodega')?.addEventListener('submit', async function
     const esEdicion = id !== "";
 
     const bodegaData = {
-        nombre: document.getElementById('bodegaNombre').value.trim(),
-        ubicacion: document.getElementById('bodegaUbicacion')?.value.trim() || ''
+       nombre: document.getElementById('bodegaNombre').value.trim(),
+        ubicacion: document.getElementById('bodegaUbicacion').value.trim(),
+        capacidad: parseInt(document.getElementById('bodegaCapacidad').value, 10),
+        encargado: document.getElementById('bodegaEncargado').value.trim()
     };
 
     const endpoint = esEdicion ? `/bodegas/${id}` : '/bodegas';
@@ -361,6 +368,8 @@ async function editarBodega(id) {
         document.getElementById('bodegaId').value = bodega.id;
         document.getElementById('bodegaNombre').value = bodega.nombre;
         document.getElementById('bodegaUbicacion').value = bodega.ubicacion || '';
+        document.getElementById('bodegaCapacidad').value = bodega.capacidad || 0;
+        document.getElementById('bodegaEncargado').value = bodega.encargado || '';
 
         document.getElementById('formBodegaContainer').classList.remove('hidden');
     } catch (error) {
@@ -409,14 +418,14 @@ async function cargarProductos() {
         productos.forEach(producto => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td>${producto.id}</td>
-                <td>${producto.nombre}</td>
-                <td>${producto.categoria}</td>
-                <td>${producto.descripcion || 'Sin descripción'}</td>
-                <td>$${Number(producto.precio).toFixed(2)}</td>
-                <td><span class="badge ${producto.stock <= 10 ? 'bg-danger' : 'bg-success'}">${producto.stock}</span></td>
-                <td>${producto.bodega ? producto.bodega.nombre : 'Sin bodega'}</td>
-                <td>
+            <td>${producto.id}</td>
+            <td>${producto.nombre}</td>
+            <td>${producto.descripcion || ''}</td>
+            <td>${producto.categoria ? producto.categoria.nombre : 'Sin categoría'}</td>
+            <td>${producto.bodega ? producto.bodega.nombre : 'Sin bodega'}</td>
+            <td>${producto.stock}</td>
+            <td>$${producto.precio}</td>
+            <td>
                     <button class="btn btn-sm btn-primary" onclick="editarProducto(${producto.id})">Editar</button>
                     <button class="btn btn-sm btn-danger" onclick="eliminarProducto(${producto.id})">Eliminar</button>
                 </td>

@@ -42,7 +42,9 @@ class BodegaServiceTest {
                 "Bodega Principal",
                 "Bogotá",
                 500,
-                "Carlos"
+                "Carlos", 
+                List.of(), 
+                List.of()
         );
     }
 

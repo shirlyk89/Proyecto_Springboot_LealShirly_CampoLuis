@@ -78,7 +78,7 @@ function verificarSesion() {
         // Control de Rol para Auditoría y botones
         const navAuditoria = document.getElementById('navAuditoria');
         if(navAuditoria) {
-            if (currentRole === 'ADMIN') {
+            if (currentRole === 'ROLE_ADMIN' || currentRole === 'ADMIN') {
                 navAuditoria.classList.remove('hidden');
             } else {
                 navAuditoria.classList.add('hidden');
@@ -125,8 +125,9 @@ function cargarSeccion(seccionId) {
         cargarMovimientosYFormulario();
     }
 
-    if (seccionId === 'auditoria' && currentRole === 'ADMIN') {
+   if (seccionId === 'auditoria' && (currentRole === 'ROLE_ADMIN' || currentRole === 'ADMIN')) {
         cargarAuditoria();
+        cargarReportesEnPantalla();
     }
 }
 
@@ -211,6 +212,7 @@ function configurarEventosAuth() {
             e.preventDefault();
             const regUsername = document.getElementById('regUsername').value;
             const regPassword = document.getElementById('regPassword').value;
+            const regRol = document.getElementById('regRol')?.value || 'ROLE_EMPLEADO';
             const mensaje = document.getElementById('registerMensaje') || document.createElement('div');
 
             try {
@@ -218,7 +220,7 @@ function configurarEventosAuth() {
                 await fetchAPI('/auth/register', 'POST', { 
                     username: regUsername, 
                     password: regPassword,
-                    rol: 'ROLE_EMPLEADO' // Valor por defecto
+                    rol: regRol // Valor por defecto
                 });
                 alert('Usuario registrado con éxito. Por favor inicia sesión.');
                 document.getElementById('showLogin').click();
@@ -629,46 +631,88 @@ document.getElementById('formMovimiento')?.addEventListener('submit', async func
     }
 });
 
+
 // =========================================================
 // MÓDULO: AUDITORÍA Y REPORTES
 // =========================================================
+
+// 1. Carga los logs de auditoría desde el Backend
 async function cargarAuditoria() {
     const tbody = document.getElementById('tablaAuditoriaBody');
     if (!tbody) return;
 
-    const auditorias = [
-        { fecha: '2026-07-24 14:30', usuario: 'admin', operacion: 'UPDATE', entidad: 'Producto', detalle: 'Actualizó precio ID 1' },
-        { fecha: '2026-07-24 15:10', usuario: 'empleado1', operacion: 'CREATE', entidad: 'Movimiento', detalle: 'Creó entrada ID 5' }
-    ];
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Cargando registros de auditoría...</td></tr>';
 
-    tbody.innerHTML = '';
-    auditorias.forEach(a => {
-        tbody.innerHTML += `
-            <tr>
-                <td>${a.fecha}</td>
-                <td>${a.usuario}</td>
-                <td style="color: var(--accent-cyan)">${a.operacion}</td>
-                <td>${a.entidad}</td>
-                <td>${a.detalle}</td>
-            </tr>
-        `;
-    });
+    try {
+        const auditorias = await fetchAPI('/auditoria'); 
+        tbody.innerHTML = '';
 
-    const reporteStock = document.getElementById('reporteStockBodegas');
-    if(reporteStock) reporteStock.innerHTML = '<p>Bodega Central: 1200 items<br>Bodega Sur: 450 items</p>';
-    
-    const reporteMovidos = document.getElementById('reporteProductosMovidos');
-    if(reporteMovidos) reporteMovidos.innerHTML = '<p>1. Laptop Dell<br>2. Teclado Mecánico</p>';
+        if (!auditorias || auditorias.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No hay registros de auditoría.</td></tr>';
+            return;
+        }
+
+        auditorias.forEach(a => {
+            const fechaFormateada = a.fechaHora 
+                ? new Date(a.fechaHora).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' }) 
+                : (a.fecha || '-');
+
+            tbody.innerHTML += `
+                <tr>
+                    <td>${fechaFormateada}</td>
+                    <td>${a.usuario || 'Sistema'}</td>
+                    <td><span class="badge ${a.operacion ? a.operacion.toLowerCase() : ''}">${a.operacion}</span></td>
+                    <td>${a.entidad || '-'}</td>
+                    <td>${a.detalle || a.descripcion || '-'}</td>
+                </tr>
+            `;
+        });
+
+    } catch (error) {
+        console.error('Error al cargar auditoría:', error);
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--danger-color, red);">Error al cargar auditoría: ${error.message}</td></tr>`;
+    }
 }
 
+// 2. Carga los resúmenes visuales de reportes en pantalla
+async function cargarReportesEnPantalla() {
+    const reporteStock = document.getElementById('reporteStockBodegas');
+    const reporteMovidos = document.getElementById('reporteProductosMovidos');
+
+    try {
+        // Consultamos bodegas para calcular el stock actual en pantalla
+        const bodegas = await fetchAPI('/bodegas');
+        if (reporteStock && bodegas) {
+            reporteStock.innerHTML = bodegas
+                .map(b => `<p><strong>${b.nombre}:</strong> Capacidad ${b.capacidad} items</p>`)
+                .join('');
+        }
+
+        // Consultamos productos
+        const productos = await fetchAPI('/productos');
+        if (reporteMovidos && productos) {
+            const topProductos = productos.slice(0, 5); // Tomamos los primeros 5
+            reporteMovidos.innerHTML = topProductos
+                .map((p, i) => `<p>${i + 1}. ${p.nombre} (Stock: ${p.stock})</p>`)
+                .join('');
+        }
+    } catch (error) {
+        console.error('Error al cargar reportes visuales:', error);
+    }
+}
+
+// 3. Genera la descarga del archivo TXT
 function descargarReporteTxt() {
-    const texto = "--- REPORTE DE SISTEMA DE GESTIÓN ---\nGenerado el: " + new Date().toLocaleString() + "\n\nStock Total:\nBodega Central: 1200\nBodega Sur: 450\n";
+    const texto = `--- REPORTE DE SISTEMA DE GESTIÓN ---
+Generado el: ${new Date().toLocaleString('es-CO')}
+
+Reporte exportado correctamente desde el módulo de administración.`;
     
     const blob = new Blob([texto], { type: 'text/plain' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'reporte_inventario.txt';
+    a.download = `reporte_inventario_${new Date().toISOString().slice(0, 10)}.txt`;
     document.body.appendChild(a);
     a.click();
     window.URL.revokeObjectURL(url);

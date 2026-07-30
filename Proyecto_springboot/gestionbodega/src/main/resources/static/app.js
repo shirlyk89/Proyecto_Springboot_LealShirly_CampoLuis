@@ -418,14 +418,13 @@ async function cargarProductos() {
         productos.forEach(producto => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
-            <td>${producto.id}</td>
-            <td>${producto.nombre}</td>
-            <td>${producto.descripcion || ''}</td>
-            <td>${producto.categoria ? producto.categoria.nombre : 'Sin categoría'}</td>
-            <td>${producto.bodega ? producto.bodega.nombre : 'Sin bodega'}</td>
-            <td>${producto.stock}</td>
-            <td>$${producto.precio}</td>
-            <td>
+         <td>${producto.id}</td>
+                <td>${producto.nombre}</td>
+                <td>${producto.descripcion || ''}</td>
+                <td>${producto.categoria || 'Sin Categoría'}</td>  
+                <td>${producto.stock}</td>
+                <td>$${producto.precio}</td>
+                <td>
                     <button class="btn btn-sm btn-primary" onclick="editarProducto(${producto.id})">Editar</button>
                     <button class="btn btn-sm btn-danger" onclick="eliminarProducto(${producto.id})">Eliminar</button>
                 </td>
@@ -447,7 +446,7 @@ document.getElementById('formProducto')?.addEventListener('submit', async functi
 
     const productoData = {
         nombre: document.getElementById('prodNombre').value.trim(),
-        categoria: document.getElementById('prodCategoria').value().trim(),
+        categoria: document.getElementById('prodCategoria').value.trim(),
         descripcion: document.getElementById('prodDescripcion')?.value.trim() || '',
         precio: parseFloat(document.getElementById('prodPrecio').value),
         stock: parseInt(document.getElementById('prodStock').value, 10),
@@ -464,10 +463,11 @@ document.getElementById('formProducto')?.addEventListener('submit', async functi
 
         alert(esEdicion ? '¡Producto actualizado exitosamente!' : '¡Producto creado exitosamente!');
         
+        // Reset limpia todos los inputs del formulario (incluida la categoría)
         document.getElementById('formProducto').reset();
         document.getElementById('productoId').value = '';
-        document.getElementById('prodCategoria').value = producto.categoria;
         document.getElementById('formProductoContainer').classList.add('hidden');
+        
         cargarProductos();
 
     } catch (error) {
@@ -499,6 +499,7 @@ async function editarProducto(id) {
 
         document.getElementById('productoId').value = producto.id;
         document.getElementById('prodNombre').value = producto.nombre;
+        document.getElementById('prodCategoria').value = producto.categoria || '';
         document.getElementById('prodDescripcion').value = producto.descripcion || '';
         document.getElementById('prodPrecio').value = producto.precio;
         document.getElementById('prodStock').value = producto.stock;

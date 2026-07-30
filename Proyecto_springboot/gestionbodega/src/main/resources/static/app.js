@@ -212,7 +212,7 @@ function configurarEventosAuth() {
             e.preventDefault();
             const regUsername = document.getElementById('regUsername').value;
             const regPassword = document.getElementById('regPassword').value;
-            const regRol = document.getElementById('regRol')?.value || 'ROLE_EMPLEADO';
+            const regRol = document.getElementById('regRol')?.value || 'EMPLEADO';
             const mensaje = document.getElementById('registerMensaje') || document.createElement('div');
 
             try {

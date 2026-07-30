@@ -718,7 +718,8 @@ function configurarFiltrosAuditoria() {
             
             // Comprobamos si coincide la operación
             const coincideOperacion = (operacionSeleccionada === 'TODOS' || operacionSeleccionada === '') 
-                                     || tipoOperacion === operacionSeleccionada;
+                                     || tipoOperacion === operacionSeleccionada
+                                     || (operacionSeleccionada === 'CREATE' && tipoOperacion === 'INSERT');
 
             return coincideUsuario && coincideOperacion;
         });

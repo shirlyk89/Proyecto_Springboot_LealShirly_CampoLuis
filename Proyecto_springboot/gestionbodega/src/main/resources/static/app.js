@@ -637,6 +637,8 @@ document.getElementById('formMovimiento')?.addEventListener('submit', async func
 // =========================================================
 
 // 1. Carga los logs de auditoría desde el Backend
+let auditoriasData = []; // Guardará el listado original para poder filtrarlo sin volver a llamar a la API
+
 async function cargarAuditoria() {
     const tbody = document.getElementById('tablaAuditoriaBody');
     if (!tbody) return;
@@ -644,29 +646,13 @@ async function cargarAuditoria() {
     tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Cargando registros de auditoría...</td></tr>';
 
     try {
-        const auditorias = await fetchAPI('/auditoria'); 
-        tbody.innerHTML = '';
-
-        if (!auditorias || auditorias.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No hay registros de auditoría.</td></tr>';
-            return;
-        }
-
-        auditorias.forEach(a => {
-            const fechaFormateada = a.fechaHora 
-                ? new Date(a.fechaHora).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' }) 
-                : (a.fecha || '-');
-
-            tbody.innerHTML += `
-                <tr>
-                    <td>${fechaFormateada}</td>
-                    <td>${a.usuario || 'Sistema'}</td>
-                    <td><span class="badge ${a.operacion ? a.operacion.toLowerCase() : ''}">${a.operacion}</span></td>
-                    <td>${a.entidad || '-'}</td>
-                    <td>${a.detalle || a.descripcion || '-'}</td>
-                </tr>
-            `;
-        });
+        auditoriasData = await fetchAPI('/auditoria'); 
+        
+        // Asignamos eventos de filtro una sola vez al cargar la sección
+        configurarFiltrosAuditoria();
+        
+        // Renderizamos los datos completos
+        renderizarTablaAuditoria(auditoriasData);
 
     } catch (error) {
         console.error('Error al cargar auditoría:', error);
@@ -674,13 +660,76 @@ async function cargarAuditoria() {
     }
 }
 
-// 2. Carga los resúmenes visuales de reportes en pantalla
+// 2. Renderiza la tabla filtrada o completa
+function renderizarTablaAuditoria(lista) {
+    const tbody = document.getElementById('tablaAuditoriaBody');
+    if (!tbody) return;
+
+    tbody.innerHTML = '';
+
+    if (!lista || lista.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No hay registros de auditoría.</td></tr>';
+        return;
+    }
+
+    lista.forEach(a => {
+        // Formato de fecha
+        const fechaFormateada = a.fecha 
+            ? new Date(a.fecha).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'medium' }) 
+            : '-';
+
+        // Detalle: Usamos idEntidad (ej. "ID: 37") o detalle si llegaras a agregarlo en el backend
+        const detalleTexto = a.detalle ? a.detalle : (a.idEntidad ? `ID Afectado: ${a.idEntidad}` : '-');
+
+        tbody.innerHTML += `
+            <tr>
+                <td>${fechaFormateada}</td>
+                <td>${a.usuario || 'Sistema'}</td>
+                <td><span class="badge ${a.operacion ? a.operacion.toLowerCase() : ''}">${a.operacion}</span></td>
+                <td>${a.entidadAfectada || '-'}</td> <!-- CORREGIDO: entidadAfectada -->
+                <td>${detalleTexto}</td>
+            </tr>
+        `;
+    });
+}
+
+// 3. Lógica para filtrar en tiempo real por Usuario y Tipo de Operación
+function configurarFiltrosAuditoria() {
+    const inputBuscarUsuario = document.querySelector('input[placeholder*="Buscar usuario"]');
+    const selectOperacion = document.querySelector('select');
+
+    const aplicarFiltros = () => {
+        const busquedaUsuario = inputBuscarUsuario ? inputBuscarUsuario.value.toLowerCase().trim() : '';
+        const operacionSeleccionada = selectOperacion ? selectOperacion.value : 'Todos';
+
+        const resultadosFiltrados = auditoriasData.filter(a => {
+            const coincideUsuario = (a.usuario || '').toLowerCase().includes(busquedaUsuario);
+            const coincideOperacion = operacionSeleccionada === 'Todos' || 
+                                     (a.operacion || '').toUpperCase() === operacionSeleccionada.toUpperCase();
+
+            return coincideUsuario && coincideOperacion;
+        });
+
+        renderizarTablaAuditoria(resultadosFiltrados);
+    };
+
+    if (inputBuscarUsuario) {
+        inputBuscarUsuario.removeEventListener('input', aplicarFiltros);
+        inputBuscarUsuario.addEventListener('input', aplicarFiltros);
+    }
+
+    if (selectOperacion) {
+        selectOperacion.removeEventListener('change', aplicarFiltros);
+        selectOperacion.addEventListener('change', aplicarFiltros);
+    }
+}
+
+// 4. Carga los resúmenes visuales de reportes en pantalla
 async function cargarReportesEnPantalla() {
     const reporteStock = document.getElementById('reporteStockBodegas');
     const reporteMovidos = document.getElementById('reporteProductosMovidos');
 
     try {
-        // Consultamos bodegas para calcular el stock actual en pantalla
         const bodegas = await fetchAPI('/bodegas');
         if (reporteStock && bodegas) {
             reporteStock.innerHTML = bodegas
@@ -688,10 +737,9 @@ async function cargarReportesEnPantalla() {
                 .join('');
         }
 
-        // Consultamos productos
         const productos = await fetchAPI('/productos');
         if (reporteMovidos && productos) {
-            const topProductos = productos.slice(0, 5); // Tomamos los primeros 5
+            const topProductos = productos.slice(0, 5);
             reporteMovidos.innerHTML = topProductos
                 .map((p, i) => `<p>${i + 1}. ${p.nombre} (Stock: ${p.stock})</p>`)
                 .join('');
@@ -700,6 +748,10 @@ async function cargarReportesEnPantalla() {
         console.error('Error al cargar reportes visuales:', error);
     }
 }
+
+
+
+
 
 // 3. Genera la descarga del archivo TXT
 function descargarReporteTxt() {

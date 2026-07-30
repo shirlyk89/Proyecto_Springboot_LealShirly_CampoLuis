@@ -694,18 +694,31 @@ function renderizarTablaAuditoria(lista) {
 }
 
 // 3. Lógica para filtrar en tiempo real por Usuario y Tipo de Operación
+
 function configurarFiltrosAuditoria() {
-    const inputBuscarUsuario = document.querySelector('input[placeholder*="Buscar usuario"]');
-    const selectOperacion = document.querySelector('select');
+    // Seleccionamos los inputs especificando la sección de auditoría para evitar conflictos con otros selects del HTML
+    const sectionAuditoria = document.getElementById('section-auditoria');
+    if (!sectionAuditoria) return;
+
+    const inputBuscarUsuario = sectionAuditoria.querySelector('input[placeholder*="Buscar usuario"]') || 
+                               sectionAuditoria.querySelector('input[type="text"]');
+    const selectOperacion = sectionAuditoria.querySelector('select');
 
     const aplicarFiltros = () => {
         const busquedaUsuario = inputBuscarUsuario ? inputBuscarUsuario.value.toLowerCase().trim() : '';
-        const operacionSeleccionada = selectOperacion ? selectOperacion.value : 'Todos';
+        const operacionSeleccionada = selectOperacion ? selectOperacion.value.toUpperCase() : 'TODOS';
 
         const resultadosFiltrados = auditoriasData.filter(a => {
-            const coincideUsuario = (a.usuario || '').toLowerCase().includes(busquedaUsuario);
-            const coincideOperacion = operacionSeleccionada === 'Todos' || 
-                                     (a.operacion || '').toUpperCase() === operacionSeleccionada.toUpperCase();
+            // Obtenemos el nombre del usuario o 'sistema' si es nulo
+            const nombreUsuario = (a.usuario || 'sistema').toLowerCase();
+            const tipoOperacion = (a.operacion || '').toUpperCase();
+
+            // Comprobamos si coincide el texto digitado
+            const coincideUsuario = nombreUsuario.includes(busquedaUsuario);
+            
+            // Comprobamos si coincide la operación
+            const coincideOperacion = (operacionSeleccionada === 'TODOS' || operacionSeleccionada === '') 
+                                     || tipoOperacion === operacionSeleccionada;
 
             return coincideUsuario && coincideOperacion;
         });
@@ -713,6 +726,7 @@ function configurarFiltrosAuditoria() {
         renderizarTablaAuditoria(resultadosFiltrados);
     };
 
+    // Escuchamos el evento de escritura/cambio
     if (inputBuscarUsuario) {
         inputBuscarUsuario.removeEventListener('input', aplicarFiltros);
         inputBuscarUsuario.addEventListener('input', aplicarFiltros);

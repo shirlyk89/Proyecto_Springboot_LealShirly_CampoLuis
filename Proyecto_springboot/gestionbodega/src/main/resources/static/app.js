@@ -577,7 +577,7 @@ async function cargarMovimientosYFormulario() {
             const origenNombre = m.bodegaOrigen ? m.bodegaOrigen.nombre : '-';
             const destinoNombre = m.bodegaDestino ? m.bodegaDestino.nombre : '-';
             const productoNombre = m.producto ? m.producto.nombre : 'N/D';
-            const fechaFormateada = m.fecha ? new Date(m.fecha).toLocaleString() : '-';
+            const fechaFormateada = m.fechaHora ? new Date(m.fechaHora).toLocaleString() : '-';
 
             tbody.innerHTML += `
                 <tr>
@@ -608,6 +608,7 @@ document.getElementById('formMovimiento')?.addEventListener('submit', async func
     const movimientoData = {
         tipo: tipo,
         cantidad: parseInt(cantidad, 10),
+        fechaHora: document.getElementById('movFechaHora').value,
         producto: { id: parseInt(productoId, 10) },
         bodegaOrigen: bodegaOrigenId ? { id: parseInt(bodegaOrigenId, 10) } : null,
         bodegaDestino: bodegaDestinoId ? { id: parseInt(bodegaDestinoId, 10) } : null
